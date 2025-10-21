@@ -3,12 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Domicilios</title>
+    <title>Fluxi - Sistema de Domicilios</title>
     
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
     <style>
@@ -23,7 +20,6 @@
             background: #f5f5f5;
         }
 
-        /* Sidebar */
         .sidebar {
             position: fixed;
             left: 0;
@@ -64,11 +60,6 @@
             border-left-color: #3498db;
         }
 
-        .menu-item i {
-            margin-right: 10px;
-        }
-
-        /* Main Content */
         .main-content {
             margin-left: 250px;
             padding: 20px;
@@ -83,7 +74,6 @@
             display: block;
         }
 
-        /* Cards */
         .card {
             background: white;
             border-radius: 8px;
@@ -106,7 +96,6 @@
             font-size: 1.5em;
         }
 
-        /* Buttons */
         .btn {
             padding: 10px 20px;
             border: none;
@@ -153,13 +142,21 @@
             background: #7f8c8d;
         }
 
+        .btn-whatsapp {
+            background: #25D366;
+            color: white;
+        }
+
+        .btn-whatsapp:hover {
+            background: #128C7E;
+        }
+
         .btn-small {
             padding: 5px 10px;
             font-size: 12px;
             margin: 0 2px;
         }
 
-        /* Forms */
         .form-group {
             margin-bottom: 15px;
         }
@@ -188,7 +185,6 @@
             border-color: #3498db;
         }
 
-        /* Table */
         .table-container {
             overflow-x: auto;
         }
@@ -223,7 +219,6 @@
             margin: 2px;
         }
 
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -270,7 +265,6 @@
             justify-content: flex-end;
         }
 
-        /* Badge */
         .badge {
             display: inline-block;
             padding: 4px 8px;
@@ -299,7 +293,6 @@
             color: #0c5460;
         }
 
-        /* Alert */
         .alert {
             padding: 15px;
             border-radius: 5px;
@@ -324,56 +317,6 @@
             border: 1px solid #bee5eb;
         }
 
-        /* Map Container */
-        #map {
-            background: #e0e0e0;
-        }
-
-        .leaflet-container {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .delivery-marker-popup {
-            font-size: 13px;
-        }
-
-        .delivery-marker-popup strong {
-            color: #2c3e50;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .delivery-marker-popup .status-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 5px;
-        }
-
-        .status-dot.disponible {
-            background: #27ae60;
-        }
-
-        .status-dot.ocupado {
-            background: #f39c12;
-        }
-
-        .status-dot.inactivo {
-            background: #e74c3c;
-        }
-
-        /* WhatsApp Button */
-        .btn-whatsapp {
-            background: #25D366;
-            color: white;
-        }
-
-        .btn-whatsapp:hover {
-            background: #128C7E;
-        }
-
-        /* Order Status Colors */
         .status-badge {
             padding: 5px 10px;
             border-radius: 12px;
@@ -407,7 +350,6 @@
             color: #721c24;
         }
 
-        /* Order Details */
         .order-detail {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -434,7 +376,36 @@
             font-weight: 600;
         }
 
-        /* Responsive */
+        #map, #tracking-map {
+            background: #e0e0e0;
+        }
+
+        .delivery-marker-popup strong {
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-dot.disponible {
+            background: #27ae60;
+        }
+
+        .status-dot.ocupado {
+            background: #f39c12;
+        }
+
+        .status-dot.inactivo {
+            background: #e74c3c;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 width: 100%;
@@ -446,47 +417,32 @@
                 margin-left: 0;
             }
 
-            #map {
+            #map, #tracking-map {
                 height: 300px !important;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <h2>🚚 Domicilios App</h2>
+            <h2>🚀 Fluxi</h2>
         </div>
-        <div class="menu-item active" data-module="usuarios">
-            👥 Gestión de Usuarios
-        </div>
-        <div class="menu-item" data-module="domiciliarios">
-            🏍️ Domiciliarios
-        </div>
-        <div class="menu-item" data-module="pedidos">
-            📦 Pedidos
-        </div>
-        <div class="menu-item" data-module="dashboard">
-            📊 Dashboard
-        </div>
-        <div class="menu-item" data-module="configuracion">
-            ⚙️ Configuración
-        </div>
+        <div class="menu-item active" data-module="usuarios">👥 Gestión de Usuarios</div>
+        <div class="menu-item" data-module="domiciliarios">🏍️ Domiciliarios</div>
+        <div class="menu-item" data-module="pedidos">📦 Pedidos</div>
+        <div class="menu-item" data-module="dashboard">📊 Dashboard</div>
+        <div class="menu-item" data-module="configuracion">⚙️ Configuración</div>
     </div>
 
-    <!-- Main Content -->
     <div class="main-content">
-        <!-- MÓDULO: GESTIÓN DE USUARIOS -->
         <div id="module-usuarios" class="module-container active">
             <div class="card">
                 <div class="card-header">
                     <h3>👥 Gestión de Usuarios</h3>
-                    <button class="btn btn-primary" onclick="openUserModal()">+ Nuevo Usuario</button>
+                    <button class="btn btn-primary" id="btn-new-user">+ Nuevo Usuario</button>
                 </div>
-
                 <div id="users-alert"></div>
-
                 <div class="table-container">
                     <table>
                         <thead>
@@ -501,7 +457,7 @@
                         <tbody id="users-table-body">
                             <tr>
                                 <td colspan="5" style="text-align: center; padding: 30px;">
-                                    Cargando usuarios...
+                                    Ingrese un nuevo usuario
                                 </td>
                             </tr>
                         </tbody>
@@ -510,17 +466,13 @@
             </div>
         </div>
 
-        <!-- MÓDULO: DOMICILIARIOS -->
         <div id="module-domiciliarios" class="module-container">
-            <!-- Card de Domiciliarios -->
             <div class="card">
                 <div class="card-header">
                     <h3>🏍️ Gestión de Domiciliarios</h3>
-                    <button class="btn btn-primary" onclick="openDeliveryModal()">+ Nuevo Domiciliario</button>
+                    <button class="btn btn-primary" id="btn-new-delivery">+ Nuevo Domiciliario</button>
                 </div>
-
                 <div id="delivery-alert"></div>
-
                 <div class="table-container">
                     <table>
                         <thead>
@@ -534,20 +486,17 @@
                         </thead>
                         <tbody id="delivery-table-body">
                             <tr>
-                                <td colspan="5" style="text-align: center; padding: 30px;">
-                                    Cargando domiciliarios...
-                                </td>
+                                <td colspan="5" style="text-align: center; padding: 30px;">Cargando...</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Card de Mapa en Tiempo Real -->
             <div class="card">
                 <div class="card-header">
                     <h3>📍 Ubicación en Tiempo Real</h3>
-                    <button class="btn btn-secondary btn-small" onclick="refreshMap()">🔄 Actualizar Mapa</button>
+                    <button class="btn btn-secondary btn-small" id="btn-refresh-map">🔄 Actualizar Mapa</button>
                 </div>
                 <div id="map" style="height: 500px; border-radius: 8px;"></div>
                 <div style="margin-top: 10px; font-size: 12px; color: #7f8c8d;">
@@ -556,20 +505,15 @@
             </div>
         </div>
 
-        <!-- MÓDULO: PEDIDOS -->
         <div id="module-pedidos" class="module-container">
-            <!-- Card de Pedidos -->
             <div class="card">
                 <div class="card-header">
                     <h3>📦 Gestión de Pedidos</h3>
-                    <button class="btn btn-primary" onclick="openOrderModal()">+ Nuevo Pedido</button>
+                    <button class="btn btn-primary" id="btn-new-order">+ Nuevo Pedido</button>
                 </div>
-
                 <div id="orders-alert"></div>
-
-                <!-- Filtros -->
                 <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
-                    <select id="filter-status" onchange="filterOrders()" style="padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                    <select id="filter-status" style="padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
                         <option value="">Todos los estados</option>
                         <option value="pendiente">Pendiente</option>
                         <option value="asignado">Asignado</option>
@@ -577,9 +521,8 @@
                         <option value="entregado">Entregado</option>
                         <option value="cancelado">Cancelado</option>
                     </select>
-                    <button class="btn btn-secondary btn-small" onclick="loadOrders()">🔄 Actualizar</button>
+                    <button class="btn btn-secondary btn-small" id="btn-refresh-orders">🔄 Actualizar</button>
                 </div>
-
                 <div class="table-container">
                     <table>
                         <thead>
@@ -596,9 +539,7 @@
                         </thead>
                         <tbody id="orders-table-body">
                             <tr>
-                                <td colspan="8" style="text-align: center; padding: 30px;">
-                                    Cargando pedidos...
-                                </td>
+                                <td colspan="8" style="text-align: center; padding: 30px;">Cargando...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -606,11 +547,8 @@
             </div>
         </div>
 
-        <!-- MÓDULO: DASHBOARD -->
         <div id="module-dashboard" class="module-container">
-            <!-- Estadísticas Principales -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
-                <!-- Card Pedidos Hoy -->
                 <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
@@ -620,8 +558,6 @@
                         <div style="font-size: 48px; opacity: 0.3;">📦</div>
                     </div>
                 </div>
-
-                <!-- Card Pedidos Semana -->
                 <div class="card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
@@ -631,8 +567,6 @@
                         <div style="font-size: 48px; opacity: 0.3;">📅</div>
                     </div>
                 </div>
-
-                <!-- Card Pedidos Mes -->
                 <div class="card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
@@ -642,8 +576,6 @@
                         <div style="font-size: 48px; opacity: 0.3;">📊</div>
                     </div>
                 </div>
-
-                <!-- Card Ingresos Totales -->
                 <div class="card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
@@ -655,9 +587,7 @@
                 </div>
             </div>
 
-            <!-- Segunda Fila de Estadísticas -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
-                <!-- Card Domiciliarios Activos -->
                 <div class="card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
@@ -667,8 +597,6 @@
                         <div style="font-size: 48px; opacity: 0.3;">🏍️</div>
                     </div>
                 </div>
-
-                <!-- Card Tiempo Promedio -->
                 <div class="card" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); color: white;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
@@ -678,8 +606,6 @@
                         <div style="font-size: 48px; opacity: 0.3;">⏱️</div>
                     </div>
                 </div>
-
-                <!-- Card Pedidos Activos -->
                 <div class="card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #2c3e50;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
@@ -689,8 +615,6 @@
                         <div style="font-size: 48px; opacity: 0.3;">🚚</div>
                     </div>
                 </div>
-
-                <!-- Card Tasa de Completados -->
                 <div class="card" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #2c3e50;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
@@ -702,21 +626,16 @@
                 </div>
             </div>
 
-            <!-- Gráficos y Rankings -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
-                <!-- Top Domiciliarios -->
                 <div class="card">
                     <div class="card-header">
                         <h3>🔥 Domiciliarios Más Eficientes</h3>
                     </div>
                     <div id="top-deliveries-container">
-                        <div style="text-align: center; padding: 30px; color: #7f8c8d;">
-                            Cargando datos...
-                        </div>
+                        <div style="text-align: center; padding: 30px; color: #7f8c8d;">Cargando datos...</div>
                     </div>
                 </div>
 
-                <!-- Distribución de Estados -->
                 <div class="card">
                     <div class="card-header">
                         <h3>📊 Estado de Pedidos</h3>
@@ -725,7 +644,6 @@
                 </div>
             </div>
 
-            <!-- Pedidos Recientes -->
             <div class="card" style="margin-top: 20px;">
                 <div class="card-header">
                     <h3>📦 Pedidos Recientes</h3>
@@ -744,16 +662,13 @@
                         </thead>
                         <tbody id="recent-orders-table">
                             <tr>
-                                <td colspan="6" style="text-align: center; padding: 30px;">
-                                    Cargando pedidos recientes...
-                                </td>
+                                <td colspan="6" style="text-align: center; padding: 30px;">Cargando...</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Gráfico de Ingresos por Día -->
             <div class="card" style="margin-top: 20px;">
                 <div class="card-header">
                     <h3>💰 Ingresos de los Últimos 7 Días</h3>
@@ -762,136 +677,147 @@
             </div>
         </div>
 
-        <!-- MÓDULO: CONFIGURACIÓN (Placeholder) -->
         <div id="module-configuracion" class="module-container">
             <div class="card">
                 <div class="card-header">
-                    <h3>⚙️ Configuración</h3>
+                    <h3>⚙️ Configuración de Fluxi</h3>
                 </div>
-                <div class="alert alert-info">
-                    <strong>Configuración de Firebase:</strong><br>
-                    Para usar esta aplicación, debes agregar tu configuración de Firebase en el código JavaScript.
+                <div class="alert alert-success">
+                    <strong>✅ Fluxi está correctamente configurado con Supabase</strong><br>
+                    Tu aplicación está lista para usar. Las credenciales ya están configuradas.
+                </div>
+                
+                <div class="card" style="margin-top: 20px;">
+                    <h4 style="margin-bottom: 15px;">📊 Estructura de Roles</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rol</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="badge badge-danger">Administrador</span></td>
+                                <td>Acceso completo a todas las funciones del sistema</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-info">Visualizador</span></td>
+                                <td>Solo puede ver información, sin permisos de edición</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <h4 style="margin-bottom: 15px;">📋 Estado de la Base de Datos</h4>
+                    <p style="margin-bottom: 10px;">Si las tablas no están creadas, ejecuta este SQL en Supabase:</p>
+                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 12px;">
+CREATE TABLE usuarios (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  email TEXT NOT NULL,
+  telefono TEXT,
+  rol TEXT NOT NULL CHECK (rol IN ('administrador', 'visualizador')),
+  estado TEXT NOT NULL CHECK (estado IN ('activo', 'inactivo')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE domiciliarios (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  telefono TEXT NOT NULL,
+  estado TEXT NOT NULL CHECK (estado IN ('disponible', 'ocupado', 'inactivo')),
+  pedidos_completados INTEGER DEFAULT 0,
+  ubicacion JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE pedidos (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  cliente TEXT NOT NULL,
+  telefono_cliente TEXT NOT NULL,
+  direccion TEXT NOT NULL,
+  valor_pedido NUMERIC NOT NULL,
+  valor_domicilio NUMERIC NOT NULL,
+  metodo_pago TEXT NOT NULL CHECK (metodo_pago IN ('efectivo', 'tarjeta')),
+  estado TEXT NOT NULL CHECK (estado IN ('pendiente', 'asignado', 'en_camino', 'entregado', 'cancelado')),
+  domiciliario_id UUID,
+  domiciliario_nombre TEXT,
+  domiciliario_telefono TEXT,
+  notas TEXT,
+  tiempo_aceptacion BIGINT,
+  tiempo_entrega BIGINT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE usuarios DISABLE ROW LEVEL SECURITY;
+ALTER TABLE domiciliarios DISABLE ROW LEVEL SECURITY;
+ALTER TABLE pedidos DISABLE ROW LEVEL SECURITY;</pre>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Pedido -->
-    <div id="order-modal" class="modal">
-        <div class="modal-content" style="max-width: 600px;">
+    <div id="user-modal" class="modal">
+        <div class="modal-content">
             <div class="modal-header">
-                <h3 id="order-modal-title">Nuevo Pedido</h3>
+                <h3 id="user-modal-title">Nuevo Usuario</h3>
             </div>
-            
-            <form id="order-form">
+            <form id="user-form">
                 <div class="form-group">
-                    <label>Nombre del Cliente *</label>
-                    <input type="text" id="order-customer-name" required placeholder="Ej: María Rodríguez">
+                    <label>Nombre Completo *</label>
+                    <input type="text" id="user-name" required>
                 </div>
-
                 <div class="form-group">
-                    <label>Teléfono del Cliente *</label>
-                    <input type="tel" id="order-customer-phone" required placeholder="Ej: 3001234567">
+                    <label>Email *</label>
+                    <input type="email" id="user-email" required>
                 </div>
-                
                 <div class="form-group">
-                    <label>Dirección de Entrega *</label>
-                    <textarea id="order-address" required rows="2" placeholder="Ej: Calle 123 #45-67, Apto 501, Torre 2"></textarea>
+                    <label>Teléfono</label>
+                    <input type="tel" id="user-phone">
                 </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div class="form-group">
-                        <label>Valor del Pedido *</label>
-                        <input type="number" id="order-value" required min="0" step="100" placeholder="0" onchange="calculateTotal()">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Valor del Domicilio *</label>
-                        <input type="number" id="order-delivery-fee" required min="0" step="100" placeholder="0" onchange="calculateTotal()">
-                    </div>
-                </div>
-
                 <div class="form-group">
-                    <label>Total a Cobrar</label>
-                    <input type="text" id="order-total" readonly style="background: #ecf0f1; font-weight: bold; font-size: 18px;">
-                </div>
-
-                <div class="form-group">
-                    <label>Método de Pago *</label>
-                    <select id="order-payment-method" required>
+                    <label>Rol *</label>
+                    <select id="user-role" required>
                         <option value="">Seleccionar...</option>
-                        <option value="efectivo">Efectivo</option>
-                        <option value="tarjeta">Tarjeta</option>
+                        <option value="administrador">Administrador</option>
+                        <option value="visualizador">Visualizador</option>
                     </select>
                 </div>
-
                 <div class="form-group">
-                    <label>Asignar Domiciliario</label>
-                    <select id="order-delivery-person">
-                        <option value="">Sin asignar</option>
+                    <label>Estado *</label>
+                    <select id="user-status" required>
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
                     </select>
                 </div>
-
-                <div class="form-group">
-                    <label>Notas Adicionales</label>
-                    <textarea id="order-notes" rows="2" placeholder="Ej: Tocar el timbre 3 veces"></textarea>
-                </div>
-
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeOrderModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-success">Guardar Pedido</button>
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-user">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Guardar</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal Seguimiento -->
-    <div id="tracking-modal" class="modal">
-        <div class="modal-content" style="max-width: 800px;">
-            <div class="modal-header">
-                <h3>📍 Seguimiento del Pedido</h3>
-            </div>
-            
-            <div id="tracking-info" style="margin-bottom: 20px;">
-                <!-- Info del pedido se cargará aquí -->
-            </div>
-
-            <div id="tracking-map" style="height: 400px; border-radius: 8px; margin-bottom: 15px;"></div>
-
-            <div style="display: flex; gap: 10px; justify-content: space-between; align-items: center; padding: 15px; background: #f8f9fa; border-radius: 5px;">
-                <div>
-                    <strong>Estado:</strong> <span id="tracking-status"></span>
-                </div>
-                <div>
-                    <strong>Tiempo transcurrido:</strong> <span id="tracking-time">--</span>
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeTrackingModal()">Cerrar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Domiciliario -->
     <div id="delivery-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="delivery-modal-title">Nuevo Domiciliario</h3>
             </div>
-            
             <form id="delivery-form">
                 <div class="form-group">
                     <label>Nombre Completo *</label>
                     <input type="text" id="delivery-name" required placeholder="Ej: Juan Pérez">
                 </div>
-                
                 <div class="form-group">
                     <label>Número de Teléfono * (con código de país)</label>
                     <input type="tel" id="delivery-phone" required placeholder="Ej: +573001234567">
                     <small style="color: #7f8c8d; font-size: 12px;">Formato: +57 seguido del número (sin espacios)</small>
                 </div>
-                
                 <div class="form-group">
                     <label>Estado *</label>
                     <select id="delivery-status" required>
@@ -900,907 +826,633 @@
                         <option value="inactivo">Inactivo</option>
                     </select>
                 </div>
-
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeDeliveryModal()">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-delivery">Cancelar</button>
                     <button type="submit" class="btn btn-success">Guardar</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal Usuario -->
-    <div id="user-modal" class="modal">
-        <div class="modal-content">
+    <div id="order-modal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
             <div class="modal-header">
-                <h3 id="modal-title">Nuevo Usuario</h3>
+                <h3 id="order-modal-title">Nuevo Pedido</h3>
             </div>
-            
-            <form id="user-form">
+            <form id="order-form">
                 <div class="form-group">
-                    <label>Nombre Completo *</label>
-                    <input type="text" id="user-name" required>
+                    <label>Nombre del Cliente *</label>
+                    <input type="text" id="order-customer-name" required placeholder="Ej: María Rodríguez">
                 </div>
-                
                 <div class="form-group">
-                    <label>Email *</label>
-                    <input type="email" id="user-email" required>
+                    <label>Teléfono del Cliente *</label>
+                    <input type="tel" id="order-customer-phone" required placeholder="Ej: 3001234567">
                 </div>
-                
                 <div class="form-group">
-                    <label>Teléfono</label>
-                    <input type="tel" id="user-phone">
+                    <label>Dirección de Entrega *</label>
+                    <textarea id="order-address" required rows="2" placeholder="Ej: Calle 123 #45-67, Apto 501"></textarea>
                 </div>
-                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Valor del Pedido *</label>
+                        <input type="number" id="order-value" required min="0" step="100" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Valor del Domicilio *</label>
+                        <input type="number" id="order-delivery-fee" required min="0" step="100" placeholder="0">
+                    </div>
+                </div>
                 <div class="form-group">
-                    <label>Rol *</label>
-                    <select id="user-role" required>
+                    <label>Total a Cobrar</label>
+                    <input type="text" id="order-total" readonly style="background: #ecf0f1; font-weight: bold; font-size: 18px;">
+                </div>
+                <div class="form-group">
+                    <label>Método de Pago *</label>
+                    <select id="order-payment-method" required>
                         <option value="">Seleccionar...</option>
-                        <option value="admin">Administrador</option>
-                        <option value="operador">Operador</option>
-                        <option value="supervisor">Supervisor</option>
+                        <option value="efectivo">Efectivo</option>
+                        <option value="tarjeta">Tarjeta</option>
                     </select>
                 </div>
-                
                 <div class="form-group">
-                    <label>Estado *</label>
-                    <select id="user-status" required>
-                        <option value="activo">Activo</option>
-                        <option value="inactivo">Inactivo</option>
+                    <label>Asignar Domiciliario</label>
+                    <select id="order-delivery-person">
+                        <option value="">Sin asignar</option>
                     </select>
                 </div>
-
+                <div class="form-group">
+                    <label>Notas Adicionales</label>
+                    <textarea id="order-notes" rows="2" placeholder="Ej: Tocar el timbre 3 veces"></textarea>
+                </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-success">Guardar</button>
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-order">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Guardar Pedido</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Supabase SDK -->
+    <div id="tracking-modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>📍 Seguimiento del Pedido</h3>
+            </div>
+            <div id="tracking-info" style="margin-bottom: 20px;"></div>
+            <div id="tracking-map" style="height: 400px; border-radius: 8px; margin-bottom: 15px;"></div>
+            <div style="display: flex; gap: 10px; justify-content: space-between; align-items: center; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                <div><strong>Estado:</strong> <span id="tracking-status"></span></div>
+                <div><strong>Tiempo transcurrido:</strong> <span id="tracking-time">--</span></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btn-close-tracking">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-        // ⚠️ CONFIGURA TU SUPABASE AQUÍ
-        // 1. Ve a https://supabase.com y crea una cuenta gratis
-        // 2. Crea un nuevo proyecto (toma 2 minutos)
-        // 3. Ve a Settings > API
-        // 4. Copia la URL y la anon/public key
-        const SUPABASE_URL = 'https://tu-proyecto.supabase.co';
-        const SUPABASE_KEY = 'tu-anon-key-aqui';
+        const SUPABASE_URL = 'https://lbifbexhmvbanvrjfglp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxiaWZiZXhobXZiYW52cmpmZ2xwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5Mjg5MDQsImV4cCI6MjA3NjUwNDkwNH0.ZXjCv4DkNobkn3IDK9wYBjjOV55Bf_UwcSxhkt6YqGo';
 
-        // Inicializar Supabase
         let supabase = null;
         try {
             supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-            console.log('✅ Supabase conectado correctamente');
-            
-            // Verificar conexión
-            testConnection();
+            console.log('%c✅ Fluxi conectado a Supabase', 'color: green; font-weight: bold; font-size: 14px;');
         } catch (error) {
-            console.error('❌ Error al conectar Supabase:', error);
-            showAlert('users-alert', 'error', 'Error: Configura Supabase en el código. Revisa la consola para más detalles.');
+            console.error('❌ Error conectando Supabase:', error);
         }
 
-        // Función para verificar conexión
-        async function testConnection() {
-            if (!supabase) return;
-            
-            try {
-                const { data, error } = await supabase.from('usuarios').select('count', { count: 'exact', head: true });
-                if (error && error.message.includes('relation')) {
-                    console.warn('⚠️ Tablas no creadas aún. Usa el SQL proporcionado para crearlas.');
-                }
-            } catch (error) {
-                console.error('Error verificando conexión:', error);
-            }
-        }
-
-        // Variables globales
         let currentUserId = null;
+        let currentDeliveryId = null;
+        let currentOrderId = null;
+        let allOrders = [];
+        let map = null;
+        let markers = {};
+        let trackingMap = null;
+        let trackingMarker = null;
+        let trackingInterval = null;
+        let statusChart = null;
+        let incomeChart = null;
 
-        // Función auxiliar para escapar HTML
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+        function showAlert(containerId, type, message) {
+            const container = document.getElementById(containerId);
+            const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-error' : 'alert-info';
+            container.innerHTML = '<div class="alert ' + alertClass + '">' + message + '</div>';
+            setTimeout(function() { container.innerHTML = ''; }, 5000);
         }
 
-        // ==================== NAVEGACIÓN DE MÓDULOS ====================
-        document.querySelectorAll('.menu-item').forEach(item => {
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value);
+        }
+
+        function calculateElapsedTime(timestamp) {
+            if (!timestamp) return '--';
+            const now = Date.now();
+            const diff = now - timestamp;
+            const hours = Math.floor(diff / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            return hours > 0 ? hours + 'h ' + minutes + 'm' : minutes + 'm';
+        }
+
+        document.querySelectorAll('.menu-item').forEach(function(item) {
             item.addEventListener('click', function() {
-                // Remover clase active de todos
-                document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
-                document.querySelectorAll('.module-container').forEach(m => m.classList.remove('active'));
-                
-                // Activar el seleccionado
+                document.querySelectorAll('.menu-item').forEach(function(m) { m.classList.remove('active'); });
+                document.querySelectorAll('.module-container').forEach(function(m) { m.classList.remove('active'); });
                 this.classList.add('active');
                 const moduleName = this.dataset.module;
                 document.getElementById('module-' + moduleName).classList.add('active');
+                
+                if (moduleName === 'domiciliarios') {
+                    setTimeout(function() { initMap(); loadDeliveries(); }, 100);
+                } else if (moduleName === 'pedidos') {
+                    setTimeout(function() { loadOrders(); }, 100);
+                } else if (moduleName === 'dashboard') {
+                    setTimeout(function() { loadDashboard(); }, 100);
+                }
             });
         });
 
-        // ==================== MÓDULO: USUARIOS ====================
-        
-        // Cargar usuarios
         async function loadUsers() {
             if (!supabase) {
-                document.getElementById('users-table-body').innerHTML = 
-                    '<tr><td colspan="5" style="text-align: center; padding: 30px; color: #e74c3c;">' +
-                    '<strong>⚠️ Supabase no configurado</strong><br>' +
-                    'Por favor configura tus credenciales de Supabase en el código' +
-                    '</td></tr>';
+                const tbody = document.getElementById('users-table-body');
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px; color: #e74c3c;"><strong>⚠️ Error de conexión</strong></td></tr>';
                 return;
             }
             
             try {
-                const { data: usuarios, error } = await supabase
-                    .from('usuarios')
-                    .select('*')
-                    .order('created_at', { ascending: false });
+                const result = await supabase.from('usuarios').select('*').order('created_at', { ascending: false });
                 
-                if (error) throw error;
-                
-                const tbody = document.getElementById('users-table-body');
-                
-                if (!usuarios || usuarios.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px;">No hay usuarios registrados. Crea el primero!</td></tr>';
+                if (result.error) {
+                    console.error('Error Supabase:', result.error);
+                    showAlert('users-alert', 'error', 'Error: ' + result.error.message);
                     return;
                 }
                 
+                const tbody = document.getElementById('users-table-body');
                 tbody.innerHTML = '';
-                usuarios.forEach((user) => {
-                    const statusBadge = user.estado === 'activo' ? 
-                        '<span class="badge badge-success">Activo</span>' : 
-                        '<span class="badge badge-danger">Inactivo</span>';
+                
+                if (!result.data || result.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px;">Ingrese un nuevo usuario</td></tr>';
+                    return;
+                }
+                
+                result.data.forEach(function(user) {
+                    const row = tbody.insertRow();
+                    row.innerHTML = '<td><strong>' + user.nombre + '</strong></td><td>' + user.email + '</td><td></td><td></td><td class="actions-cell"></td>';
                     
-                    const roleBadge = {
-                        'admin': '<span class="badge badge-danger">Administrador</span>',
-                        'operador': '<span class="badge badge-info">Operador</span>',
-                        'supervisor': '<span class="badge badge-warning">Supervisor</span>'
-                    }[user.rol] || user.rol;
+                    const roleBadge = document.createElement('span');
+                    roleBadge.className = 'badge ' + (user.rol === 'administrador' ? 'badge-danger' : 'badge-info');
+                    roleBadge.textContent = user.rol === 'administrador' ? 'Administrador' : 'Visualizador';
+                    row.cells[2].appendChild(roleBadge);
                     
-                    const row = document.createElement('tr');
-                    row.innerHTML = 
-                        '<td><strong>' + escapeHtml(user.nombre) + '</strong></td>' +
-                        '<td>' + escapeHtml(user.email) + '</td>' +
-                        '<td>' + roleBadge + '</td>' +
-                        '<td>' + statusBadge + '</td>' +
-                        '<td class="actions-cell"></td>';
-                    
-                    // Agregar botones de forma segura
-                    const actionsCell = row.querySelector('.actions-cell');
+                    const statusBadge = document.createElement('span');
+                    statusBadge.className = 'badge ' + (user.estado === 'activo' ? 'badge-success' : 'badge-danger');
+                    statusBadge.textContent = user.estado === 'activo' ? 'Activo' : 'Inactivo';
+                    row.cells[3].appendChild(statusBadge);
                     
                     const editBtn = document.createElement('button');
                     editBtn.className = 'btn btn-primary btn-small';
                     editBtn.textContent = 'Editar';
-                    editBtn.onclick = function() {
-                        window.editUser(user.id);
-                    };
-                    actionsCell.appendChild(editBtn);
+                    editBtn.onclick = function() { openUserModal(user); };
+                    row.cells[4].appendChild(editBtn);
                     
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'btn btn-danger btn-small';
                     deleteBtn.textContent = 'Eliminar';
-                    deleteBtn.onclick = function() {
-                        window.deleteUser(user.id);
-                    };
-                    actionsCell.appendChild(deleteBtn);
-                    
-                    // Guardar datos en el elemento para acceso posterior
-                    row.dataset.userData = JSON.stringify(user);
-                    tbody.appendChild(row);
+                    deleteBtn.onclick = function() { deleteUser(user.id); };
+                    row.cells[4].appendChild(deleteBtn);
                 });
             } catch (error) {
-                console.error('Error cargando usuarios:', error);
-                showAlert('users-alert', 'error', 'Error al cargar usuarios: ' + error.message);
+                console.error('Error:', error);
+                showAlert('users-alert', 'error', 'Error al cargar: ' + error.message);
             }
         }
 
-        // Abrir modal
-        window.openUserModal = function(userId = null, userData = null) {
-            const modal = document.getElementById('user-modal');
-            const form = document.getElementById('user-form');
-            const title = document.getElementById('modal-title');
-            
-            currentUserId = userId;
-            
-            if (userId && userData) {
-                title.textContent = 'Editar Usuario';
-                document.getElementById('user-name').value = userData.nombre || '';
-                document.getElementById('user-email').value = userData.email || '';
-                document.getElementById('user-phone').value = userData.telefono || '';
-                document.getElementById('user-role').value = userData.rol || '';
-                document.getElementById('user-status').value = userData.estado || 'activo';
-            } else {
-                title.textContent = 'Nuevo Usuario';
-                form.reset();
-                // Establecer valor por defecto
-                document.getElementById('user-status').value = 'activo';
-            }
-            
-            modal.classList.add('active');
-        };
+        function openUserModal(user) {
+            currentUserId = user ? user.id : null;
+            document.getElementById('user-modal-title').textContent = user ? 'Editar Usuario' : 'Nuevo Usuario';
+            document.getElementById('user-name').value = user ? user.nombre : '';
+            document.getElementById('user-email').value = user ? user.email : '';
+            document.getElementById('user-phone').value = user ? user.telefono || '' : '';
+            document.getElementById('user-role').value = user ? user.rol : '';
+            document.getElementById('user-status').value = user ? user.estado : 'activo';
+            document.getElementById('user-modal').classList.add('active');
+        }
 
-        // Cerrar modal
-        window.closeUserModal = function() {
+        function closeUserModal() {
             document.getElementById('user-modal').classList.remove('active');
             document.getElementById('user-form').reset();
             currentUserId = null;
-        };
+        }
 
-        // Editar usuario
-        window.editUser = function(id) {
-            // Buscar el row con este ID
-            const rows = document.querySelectorAll('#users-table-body tr');
-            let userData = null;
-            
-            rows.forEach(row => {
-                if (row.dataset.userData) {
-                    const data = JSON.parse(row.dataset.userData);
-                    if (data.id === id) {
-                        userData = data;
-                    }
-                }
-            });
-            
-            if (userData) {
-                window.openUserModal(id, userData);
-            }
-        };
-
-        // Eliminar usuario
-        window.deleteUser = async function(id) {
-            if (!confirm('¿Estás seguro de eliminar este usuario?')) return;
-            
+        async function deleteUser(id) {
+            if (!confirm('¿Eliminar este usuario?')) return;
             try {
-                const { error } = await supabase
-                    .from('usuarios')
-                    .delete()
-                    .eq('id', id);
-                
-                if (error) throw error;
-                
+                const result = await supabase.from('usuarios').delete().eq('id', id);
+                if (result.error) throw result.error;
                 showAlert('users-alert', 'success', 'Usuario eliminado correctamente');
                 loadUsers();
             } catch (error) {
-                console.error('Error eliminando usuario:', error);
-                showAlert('users-alert', 'error', 'Error al eliminar usuario: ' + error.message);
+                showAlert('users-alert', 'error', 'Error: ' + error.message);
             }
-        };
+        }
 
-        // Guardar usuario (crear o actualizar)
+        document.getElementById('btn-new-user').addEventListener('click', function() { openUserModal(null); });
+        document.getElementById('btn-cancel-user').addEventListener('click', closeUserModal);
+        document.getElementById('user-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeUserModal();
+        });
+
         document.getElementById('user-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             if (!supabase) {
-                showAlert('users-alert', 'error', 'Supabase no está configurado. Por favor configura tus credenciales.');
+                showAlert('users-alert', 'error', 'Error de conexión con Supabase');
+                return;
+            }
+            
+            const nombre = document.getElementById('user-name').value.trim();
+            const email = document.getElementById('user-email').value.trim();
+            const telefono = document.getElementById('user-phone').value.trim();
+            const rol = document.getElementById('user-role').value;
+            const estado = document.getElementById('user-status').value;
+            
+            if (!nombre || !email || !rol) {
+                showAlert('users-alert', 'error', 'Por favor completa todos los campos obligatorios');
                 return;
             }
             
             const userData = {
-                nombre: document.getElementById('user-name').value.trim(),
-                email: document.getElementById('user-email').value.trim(),
-                telefono: document.getElementById('user-phone').value.trim(),
-                rol: document.getElementById('user-role').value,
-                estado: document.getElementById('user-status').value,
+                nombre: nombre,
+                email: email,
+                telefono: telefono,
+                rol: rol,
+                estado: estado,
                 updated_at: new Date().toISOString()
             };
-
-            // Validar campos
-            if (!userData.nombre || !userData.email || !userData.rol || !userData.estado) {
-                showAlert('users-alert', 'error', 'Por favor completa todos los campos obligatorios');
-                return;
-            }
-
+            
             try {
                 if (currentUserId) {
-                    // Actualizar
-                    const { error } = await supabase
-                        .from('usuarios')
-                        .update(userData)
-                        .eq('id', currentUserId);
-                    
-                    if (error) throw error;
+                    const result = await supabase.from('usuarios').update(userData).eq('id', currentUserId);
+                    if (result.error) throw result.error;
                     showAlert('users-alert', 'success', 'Usuario actualizado correctamente');
                 } else {
-                    // Crear
                     userData.created_at = new Date().toISOString();
-                    const { error } = await supabase
-                        .from('usuarios')
-                        .insert([userData]);
-                    
-                    if (error) throw error;
+                    const result = await supabase.from('usuarios').insert([userData]);
+                    if (result.error) throw result.error;
                     showAlert('users-alert', 'success', 'Usuario creado correctamente');
                 }
-                
-                window.closeUserModal();
+                closeUserModal();
                 loadUsers();
             } catch (error) {
-                console.error('Error guardando usuario:', error);
-                showAlert('users-alert', 'error', 'Error al guardar usuario: ' + error.message);
+                console.error('Error:', error);
+                showAlert('users-alert', 'error', 'Error al guardar: ' + error.message);
             }
         });
 
-        // Cerrar modal al hacer clic fuera
-        document.getElementById('user-modal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                window.closeUserModal();
-            }
-        });
-
-        // Función para mostrar alertas
-        function showAlert(containerId, type, message) {
-            const container = document.getElementById(containerId);
-            const alertClass = type === 'success' ? 'alert-success' : 
-                              type === 'error' ? 'alert-error' : 'alert-info';
-            
-            container.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
-            
-            setTimeout(() => {
-                container.innerHTML = '';
-            }, 5000);
-        }
-
-        // Cargar usuarios al iniciar
-        loadUsers();
-
-        // ==================== MÓDULO: DOMICILIARIOS ====================
-        
-        let currentDeliveryId = null;
-        let map = null;
-        let markers = {};
-        let locationWatchers = {};
-
-        // Inicializar mapa
         function initMap() {
             if (map) return;
-            
-            // Centro en Bogotá por defecto
             map = L.map('map').setView([4.7110, -74.0721], 12);
-            
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors',
+                attribution: 'OpenStreetMap',
                 maxZoom: 19
             }).addTo(map);
         }
 
-        // Cargar domiciliarios
         async function loadDeliveries() {
             if (!supabase) return;
-            
             try {
-                const { data: domiciliarios, error } = await supabase
-                    .from('domiciliarios')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-                
-                if (error) throw error;
-                
+                const result = await supabase.from('domiciliarios').select('*').order('created_at', { ascending: false });
                 const tbody = document.getElementById('delivery-table-body');
+                tbody.innerHTML = '';
                 
-                if (!domiciliarios || domiciliarios.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px;">No hay domiciliarios registrados</td></tr>';
+                if (!result.data || result.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px;">No hay domiciliarios</td></tr>';
                     return;
                 }
                 
-                tbody.innerHTML = '';
-                domiciliarios.forEach((delivery) => {
-                    const statusBadge = {
-                        'disponible': '<span class="badge badge-success">Disponible</span>',
-                        'ocupado': '<span class="badge badge-warning">Ocupado</span>',
-                        'inactivo': '<span class="badge badge-danger">Inactivo</span>'
-                    }[delivery.estado] || delivery.estado;
-
-                    const lastLocation = delivery.ubicacion ? 
-                        new Date(delivery.ubicacion.timestamp).toLocaleString('es-CO') :
-                        'Sin ubicación';
-
-                    const phoneClean = delivery.telefono.replace(/\D/g, '');
+                result.data.forEach(function(delivery) {
+                    const row = tbody.insertRow();
+                    row.innerHTML = '<td><strong>' + delivery.nombre + '</strong></td><td>' + delivery.telefono + '</td><td></td><td></td><td class="actions-cell"></td>';
                     
-                    // Crear botón de WhatsApp de forma segura
+                    const statusBadge = document.createElement('span');
+                    statusBadge.className = 'badge ' + (delivery.estado === 'disponible' ? 'badge-success' : delivery.estado === 'ocupado' ? 'badge-warning' : 'badge-danger');
+                    statusBadge.textContent = delivery.estado.charAt(0).toUpperCase() + delivery.estado.slice(1);
+                    row.cells[2].appendChild(statusBadge);
+                    
+                    const location = delivery.ubicacion ? new Date(delivery.ubicacion.timestamp).toLocaleString('es-CO') : 'Sin ubicación';
+                    row.cells[3].textContent = location;
+                    row.cells[3].style.fontSize = '12px';
+                    
                     const whatsappBtn = document.createElement('button');
                     whatsappBtn.className = 'btn btn-whatsapp btn-small';
-                    whatsappBtn.textContent = '💬 WhatsApp';
-                    whatsappBtn.onclick = function() {
-                        window.sendWhatsApp(phoneClean, delivery.nombre);
-                    };
-
-                    const row = document.createElement('tr');
-                    row.innerHTML = 
-                        '<td><strong>' + escapeHtml(delivery.nombre) + '</strong></td>' +
-                        '<td>' + escapeHtml(delivery.telefono) + '</td>' +
-                        '<td>' + statusBadge + '</td>' +
-                        '<td style="font-size: 12px;">' + escapeHtml(lastLocation) + '</td>' +
-                        '<td class="actions-cell">' +
-                        '</td>';
-                    
-                    // Agregar botones a la celda de acciones
-                    const actionsCell = row.querySelector('.actions-cell');
-                    actionsCell.appendChild(whatsappBtn);
+                    whatsappBtn.textContent = 'WhatsApp';
+                    whatsappBtn.onclick = function() { sendWhatsApp(delivery.telefono.replace(/\D/g, ''), delivery.nombre); };
+                    row.cells[4].appendChild(whatsappBtn);
                     
                     const editBtn = document.createElement('button');
                     editBtn.className = 'btn btn-primary btn-small';
                     editBtn.textContent = 'Editar';
-                    editBtn.onclick = function() {
-                        window.editDelivery(delivery.id);
-                    };
-                    actionsCell.appendChild(editBtn);
+                    editBtn.onclick = function() { openDeliveryModal(delivery); };
+                    row.cells[4].appendChild(editBtn);
                     
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'btn btn-danger btn-small';
                     deleteBtn.textContent = 'Eliminar';
-                    deleteBtn.onclick = function() {
-                        window.deleteDelivery(delivery.id);
-                    };
-                    actionsCell.appendChild(deleteBtn);
+                    deleteBtn.onclick = function() { deleteDelivery(delivery.id); };
+                    row.cells[4].appendChild(deleteBtn);
                     
-                    row.dataset.deliveryData = JSON.stringify(delivery);
-                    tbody.appendChild(row);
-
-                    // Actualizar marcador en el mapa
                     if (delivery.ubicacion && delivery.ubicacion.lat && delivery.ubicacion.lng) {
                         updateMarker(delivery.id, delivery);
                     }
                 });
             } catch (error) {
-                console.error('Error cargando domiciliarios:', error);
-                showAlert('delivery-alert', 'error', 'Error al cargar domiciliarios: ' + error.message);
+                console.error('Error:', error);
             }
         }
 
-        // Actualizar marcador en el mapa
         function updateMarker(id, delivery) {
             if (!map) initMap();
+            const lat = delivery.ubicacion.lat;
+            const lng = delivery.ubicacion.lng;
             
-            const { lat, lng } = delivery.ubicacion;
-            
-            // Si ya existe el marcador, actualizarlo
             if (markers[id]) {
                 markers[id].setLatLng([lat, lng]);
             } else {
-                // Crear nuevo marcador
-                const bgColor = delivery.estado === 'disponible' ? '#27ae60' : delivery.estado === 'ocupado' ? '#f39c12' : '#e74c3c';
-                const iconHtml = document.createElement('div');
-                iconHtml.style.cssText = 'background: ' + bgColor + '; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px;';
-                iconHtml.textContent = '🏍️';
+                const color = delivery.estado === 'disponible' ? '#27ae60' : delivery.estado === 'ocupado' ? '#f39c12' : '#e74c3c';
+                const iconDiv = document.createElement('div');
+                iconDiv.style.cssText = 'background:' + color + ';width:30px;height:30px;border-radius:50%;border:3px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:16px';
+                iconDiv.textContent = '🏍️';
                 
-                const icon = L.divIcon({
-                    className: 'custom-marker',
-                    html: iconHtml.outerHTML,
-                    iconSize: [30, 30]
-                });
-
+                const icon = L.divIcon({ className: 'custom-marker', html: iconDiv.outerHTML, iconSize: [30, 30] });
                 const marker = L.marker([lat, lng], { icon }).addTo(map);
-                
-                const popup = document.createElement('div');
-                popup.className = 'delivery-marker-popup';
-                popup.innerHTML = 
-                    '<strong>🏍️ ' + escapeHtml(delivery.nombre) + '</strong>' +
-                    '<div style="margin-top: 5px;">' +
-                    '<span class="status-dot ' + delivery.estado + '"></span>' +
-                    delivery.estado.charAt(0).toUpperCase() + delivery.estado.slice(1) +
-                    '</div>' +
-                    '<div style="margin-top: 5px; font-size: 11px; color: #7f8c8d;">' +
-                    '📞 ' + escapeHtml(delivery.telefono) +
-                    '</div>' +
-                    '<div style="margin-top: 5px; font-size: 11px; color: #7f8c8d;">' +
-                    '⏰ ' + escapeHtml(new Date(delivery.ubicacion.timestamp).toLocaleString('es-CO')) +
-                    '</div>';
-                
-                marker.bindPopup(popup);
-                
+                marker.bindPopup('<strong>' + delivery.nombre + '</strong><br>' + delivery.telefono);
                 markers[id] = marker;
             }
         }
 
-        // Enviar mensaje por WhatsApp
-        window.sendWhatsApp = function(phone, name) {
-            const linea1 = 'Hola ' + name + '! 👋\n\n';
-            const linea2 = 'Has recibido un nuevo pedido. Por favor, comparte tu ubicación en tiempo real para que podamos hacer seguimiento de la entrega.\n\n';
-            const linea3 = 'Para compartir tu ubicación:\n';
-            const linea4 = '1️⃣ Abre este chat\n';
-            const linea5 = '2️⃣ Toca el ícono de adjuntar (+)\n';
-            const linea6 = '3️⃣ Selecciona "Ubicación"\n';
-            const linea7 = '4️⃣ Toca "Ubicación en tiempo real"\n';
-            const linea8 = '5️⃣ Selecciona la duración\n\n';
-            const linea9 = '¡Gracias! 🚀';
-            
-            const message = encodeURIComponent(linea1 + linea2 + linea3 + linea4 + linea5 + linea6 + linea7 + linea8 + linea9);
-            
-            window.open('https://wa.me/' + phone + '?text=' + message, '_blank');
-        };
+        function sendWhatsApp(phone, name) {
+            const msg = 'Hola ' + name + '! Has recibido un nuevo pedido. Por favor comparte tu ubicación en tiempo real.';
+            window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(msg), '_blank');
+        }
 
-        // Abrir modal
-        window.openDeliveryModal = function(id = null, data = null) {
-            const modal = document.getElementById('delivery-modal');
-            const form = document.getElementById('delivery-form');
-            const title = document.getElementById('delivery-modal-title');
-            
-            currentDeliveryId = id;
-            
-            if (id && data) {
-                title.textContent = 'Editar Domiciliario';
-                document.getElementById('delivery-name').value = data.nombre;
-                document.getElementById('delivery-phone').value = data.telefono;
-                document.getElementById('delivery-status').value = data.estado;
-            } else {
-                title.textContent = 'Nuevo Domiciliario';
-                form.reset();
-            }
-            
-            modal.classList.add('active');
-        };
+        function openDeliveryModal(delivery) {
+            currentDeliveryId = delivery ? delivery.id : null;
+            document.getElementById('delivery-modal-title').textContent = delivery ? 'Editar Domiciliario' : 'Nuevo Domiciliario';
+            document.getElementById('delivery-name').value = delivery ? delivery.nombre : '';
+            document.getElementById('delivery-phone').value = delivery ? delivery.telefono : '';
+            document.getElementById('delivery-status').value = delivery ? delivery.estado : 'disponible';
+            document.getElementById('delivery-modal').classList.add('active');
+        }
 
-        // Cerrar modal
-        window.closeDeliveryModal = function() {
+        function closeDeliveryModal() {
             document.getElementById('delivery-modal').classList.remove('active');
             document.getElementById('delivery-form').reset();
             currentDeliveryId = null;
-        };
+        }
 
-        // Editar domiciliario
-        window.editDelivery = function(id) {
-            const rows = document.querySelectorAll('#delivery-table-body tr');
-            let deliveryData = null;
-            
-            rows.forEach(row => {
-                if (row.dataset.deliveryData) {
-                    const data = JSON.parse(row.dataset.deliveryData);
-                    if (data.id === id) {
-                        deliveryData = data;
-                    }
-                }
-            });
-            
-            if (deliveryData) {
-                window.openDeliveryModal(id, deliveryData);
-            }
-        };
-
-        // Eliminar domiciliario
-        window.deleteDelivery = async function(id) {
-            if (!confirm('¿Estás seguro de eliminar este domiciliario?')) return;
-            
+        async function deleteDelivery(id) {
+            if (!confirm('¿Eliminar este domiciliario?')) return;
             try {
-                const { error } = await supabase
-                    .from('domiciliarios')
-                    .delete()
-                    .eq('id', id);
-                
-                if (error) throw error;
-                
-                // Remover marcador del mapa
+                await supabase.from('domiciliarios').delete().eq('id', id);
                 if (markers[id]) {
                     map.removeLayer(markers[id]);
                     delete markers[id];
                 }
-                
-                showAlert('delivery-alert', 'success', 'Domiciliario eliminado correctamente');
+                showAlert('delivery-alert', 'success', 'Domiciliario eliminado');
                 loadDeliveries();
             } catch (error) {
-                console.error('Error eliminando domiciliario:', error);
-                showAlert('delivery-alert', 'error', 'Error al eliminar domiciliario: ' + error.message);
+                showAlert('delivery-alert', 'error', 'Error al eliminar');
             }
-        };
+        }
 
-        // Guardar domiciliario
+        document.getElementById('btn-new-delivery').addEventListener('click', function() { openDeliveryModal(null); });
+        document.getElementById('btn-cancel-delivery').addEventListener('click', closeDeliveryModal);
+        document.getElementById('btn-refresh-map').addEventListener('click', loadDeliveries);
+        document.getElementById('delivery-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeDeliveryModal();
+        });
+
         document.getElementById('delivery-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
             const deliveryData = {
                 nombre: document.getElementById('delivery-name').value,
                 telefono: document.getElementById('delivery-phone').value,
                 estado: document.getElementById('delivery-status').value,
                 updated_at: new Date().toISOString()
             };
-
-            try {
-                if (currentDeliveryId) {
-                    // Actualizar
-                    const { error } = await supabase
-                        .from('domiciliarios')
-                        .update(deliveryData)
-                        .eq('id', currentDeliveryId);
-                    
-                    if (error) throw error;
-                    showAlert('delivery-alert', 'success', 'Domiciliario actualizado correctamente');
-                } else {
-                    // Crear
-                    deliveryData.created_at = new Date().toISOString();
-                    deliveryData.pedidos_completados = 0;
-                    const { error } = await supabase
-                        .from('domiciliarios')
-                        .insert([deliveryData]);
-                    
-                    if (error) throw error;
-                    showAlert('delivery-alert', 'success', 'Domiciliario creado correctamente. Envíale un WhatsApp para que comparta su ubicación.');
-                }
-                
-                window.closeDeliveryModal();
-                loadDeliveries();
-            } catch (error) {
-                console.error('Error guardando domiciliario:', error);
-                showAlert('delivery-alert', 'error', 'Error al guardar domiciliario: ' + error.message);
-            }
-        });
-
-        // Cerrar modal al hacer clic fuera
-        document.getElementById('delivery-modal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                window.closeDeliveryModal();
-            }
-        });
-
-        // Refrescar mapa
-        window.refreshMap = function() {
-            loadDeliveries();
-            showAlert('delivery-alert', 'success', 'Mapa actualizado');
-        };
-
-        // Inicializar mapa cuando se abre el módulo de domiciliarios
-        document.querySelector('[data-module="domiciliarios"]').addEventListener('click', function() {
-            setTimeout(() => {
-                initMap();
-                loadDeliveries();
-            }, 100);
-        });
-
-        // Cargar domiciliarios periódicamente (cada 30 segundos) para actualizar ubicaciones
-        setInterval(() => {
-            const activeModule = document.querySelector('.module-container.active');
-            if (activeModule && activeModule.id === 'module-domiciliarios') {
-                loadDeliveries();
-            }
-        }, 30000);
-
-        // ==================== MÓDULO: PEDIDOS ====================
-        
-        let currentOrderId = null;
-        let trackingMap = null;
-        let trackingMarker = null;
-        let trackingInterval = null;
-        let allOrders = [];
-
-        // Cargar pedidos
-        async function loadOrders() {
-            if (!supabase) return;
             
             try {
-                const { data: pedidos, error } = await supabase
-                    .from('pedidos')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-                
-                if (error) throw error;
-                
-                const tbody = document.getElementById('orders-table-body');
-                
-                allOrders = pedidos || [];
-                
-                if (allOrders.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px;">No hay pedidos registrados</td></tr>';
-                    return;
+                if (currentDeliveryId) {
+                    await supabase.from('domiciliarios').update(deliveryData).eq('id', currentDeliveryId);
+                    showAlert('delivery-alert', 'success', 'Domiciliario actualizado');
+                } else {
+                    deliveryData.created_at = new Date().toISOString();
+                    deliveryData.pedidos_completados = 0;
+                    await supabase.from('domiciliarios').insert([deliveryData]);
+                    showAlert('delivery-alert', 'success', 'Domiciliario creado');
                 }
+                closeDeliveryModal();
+                loadDeliveries();
+            } catch (error) {
+                showAlert('delivery-alert', 'error', 'Error al guardar');
+            }
+        });
 
+        async function loadOrders() {
+            if (!supabase) return;
+            try {
+                const result = await supabase.from('pedidos').select('*').order('created_at', { ascending: false });
+                allOrders = result.data || [];
                 renderOrders(allOrders);
             } catch (error) {
-                console.error('Error cargando pedidos:', error);
-                showAlert('orders-alert', 'error', 'Error al cargar pedidos: ' + error.message);
+                console.error('Error:', error);
             }
         }
 
-        // Renderizar pedidos
         function renderOrders(orders) {
             const tbody = document.getElementById('orders-table-body');
             tbody.innerHTML = '';
-
+            
             if (orders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px;">No hay pedidos con ese filtro</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px;">No hay pedidos</td></tr>';
                 return;
             }
-
-            orders.forEach((order) => {
-                const statusBadge = {
-                    'pendiente': '<span class="status-badge status-pendiente">⏳ Pendiente</span>',
-                    'asignado': '<span class="status-badge status-asignado">👤 Asignado</span>',
-                    'en_camino': '<span class="status-badge status-en_camino">🚚 En camino</span>',
-                    'entregado': '<span class="status-badge status-entregado">✅ Entregado</span>',
-                    'cancelado': '<span class="status-badge status-cancelado">❌ Cancelado</span>'
-                }[order.estado] || order.estado;
-
-                const elapsedTime = order.tiempo_aceptacion ? 
-                    calculateElapsedTime(order.tiempo_aceptacion) : '--';
-
-                const deliveryPerson = order.domiciliario_nombre || 'Sin asignar';
-                const orderId = order.id.substring(0, 8);
-
-                const total = formatCurrency(order.valor_pedido + order.valor_domicilio);
-
-                const row = document.createElement('tr');
-                row.innerHTML = 
-                    '<td><strong>#' + orderId + '</strong></td>' +
-                    '<td>' +
-                    '<strong>' + escapeHtml(order.cliente) + '</strong><br>' +
-                    '<small style="color: #7f8c8d;">📞 ' + escapeHtml(order.telefono_cliente) + '</small>' +
-                    '</td>' +
-                    '<td style="max-width: 200px; font-size: 12px;">' + escapeHtml(order.direccion) + '</td>' +
-                    '<td>' +
-                    '<strong>' + total + '</strong><br>' +
-                    '<small style="color: #7f8c8d;">' + (order.metodo_pago === 'efectivo' ? '💵' : '💳') + ' ' + escapeHtml(order.metodo_pago) + '</small>' +
-                    '</td>' +
-                    '<td>' + escapeHtml(deliveryPerson) + '</td>' +
-                    '<td>' + statusBadge + '</td>' +
-                    '<td><strong>' + elapsedTime + '</strong></td>' +
-                    '<td class="actions-cell"></td>';
+            
+            orders.forEach(function(order) {
+                const row = tbody.insertRow();
+                row.innerHTML = '<td><strong>#' + order.id.substring(0, 8) + '</strong></td><td><strong>' + order.cliente + '</strong><br><small>' + order.telefono_cliente + '</small></td><td>' + order.direccion + '</td><td><strong>' + formatCurrency(order.valor_pedido + order.valor_domicilio) + '</strong></td><td>' + (order.domiciliario_nombre || 'Sin asignar') + '</td><td></td><td>' + (order.tiempo_aceptacion ? calculateElapsedTime(order.tiempo_aceptacion) : '--') + '</td><td class="actions-cell"></td>';
                 
-                // Agregar botones de forma segura
-                const actionsCell = row.querySelector('.actions-cell');
+                const statusBadge = document.createElement('span');
+                statusBadge.className = 'status-badge status-' + order.estado;
+                statusBadge.textContent = order.estado.charAt(0).toUpperCase() + order.estado.slice(1);
+                row.cells[5].appendChild(statusBadge);
                 
                 if (order.estado !== 'entregado' && order.estado !== 'cancelado') {
                     const changeBtn = document.createElement('button');
                     changeBtn.className = 'btn btn-primary btn-small';
                     changeBtn.textContent = 'Cambiar Estado';
-                    changeBtn.onclick = function() {
-                        window.changeOrderStatus(order.id);
-                    };
-                    actionsCell.appendChild(changeBtn);
+                    changeBtn.onclick = function() { changeOrderStatus(order.id); };
+                    row.cells[7].appendChild(changeBtn);
                 }
                 
                 if (order.estado === 'en_camino' && order.domiciliario_id) {
                     const trackBtn = document.createElement('button');
                     trackBtn.className = 'btn btn-success btn-small';
-                    trackBtn.textContent = '📍 Rastrear';
-                    trackBtn.onclick = function() {
-                        window.openTracking(order.id);
-                    };
-                    actionsCell.appendChild(trackBtn);
+                    trackBtn.textContent = 'Rastrear';
+                    trackBtn.onclick = function() { openTracking(order); };
+                    row.cells[7].appendChild(trackBtn);
                 }
                 
                 const viewBtn = document.createElement('button');
                 viewBtn.className = 'btn btn-secondary btn-small';
                 viewBtn.textContent = 'Ver';
-                viewBtn.onclick = function() {
-                    window.viewOrderDetails(order.id);
-                };
-                actionsCell.appendChild(viewBtn);
+                viewBtn.onclick = function() { viewOrderDetails(order); };
+                row.cells[7].appendChild(viewBtn);
                 
                 if (order.estado === 'pendiente') {
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'btn btn-danger btn-small';
                     deleteBtn.textContent = 'Eliminar';
-                    deleteBtn.onclick = function() {
-                        window.deleteOrder(order.id);
-                    };
-                    actionsCell.appendChild(deleteBtn);
+                    deleteBtn.onclick = function() { deleteOrder(order.id); };
+                    row.cells[7].appendChild(deleteBtn);
                 }
-                
-                row.dataset.orderData = JSON.stringify(order);
-                tbody.appendChild(row);
             });
         }
 
-        // Filtrar pedidos
-        window.filterOrders = function() {
-            const filterStatus = document.getElementById('filter-status').value;
-            
-            if (!filterStatus) {
-                renderOrders(allOrders);
-                return;
-            }
-
-            const filtered = allOrders.filter(order => order.estado === filterStatus);
+        function filterOrders() {
+            const status = document.getElementById('filter-status').value;
+            const filtered = status ? allOrders.filter(function(o) { return o.estado === status; }) : allOrders;
             renderOrders(filtered);
-        };
-
-        // Calcular tiempo transcurrido
-        function calculateElapsedTime(timestamp) {
-            if (!timestamp) return '--';
-            
-            const now = Date.now();
-            const diff = now - timestamp;
-            
-            const hours = Math.floor(diff / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            
-            if (hours > 0) {
-                return `${hours}h ${minutes}m`;
-            }
-            return `${minutes}m`;
         }
 
-        // Formatear moneda
-        function formatCurrency(value) {
-            return new Intl.NumberFormat('es-CO', {
-                style: 'currency',
-                currency: 'COP',
-                minimumFractionDigits: 0
-            }).format(value);
-        }
-
-        // Calcular total
-        window.calculateTotal = function() {
-            const orderValue = parseFloat(document.getElementById('order-value').value) || 0;
-            const deliveryFee = parseFloat(document.getElementById('order-delivery-fee').value) || 0;
-            const total = orderValue + deliveryFee;
-            document.getElementById('order-total').value = formatCurrency(total);
-        };
-
-        // Cargar domiciliarios disponibles
-        async function loadAvailableDeliveries() {
-            if (!supabase) return;
+        async function changeOrderStatus(orderId) {
+            const order = allOrders.find(function(o) { return o.id === orderId; });
+            if (!order) return;
+            
+            const nextStatus = { 'pendiente': 'asignado', 'asignado': 'en_camino', 'en_camino': 'entregado' }[order.estado];
+            if (!nextStatus) return;
+            if (!confirm('¿Cambiar estado?')) return;
             
             try {
-                const { data: domiciliarios, error } = await supabase
-                    .from('domiciliarios')
-                    .select('*')
-                    .in('estado', ['disponible', 'ocupado']);
+                const updateData = { estado: nextStatus, updated_at: new Date().toISOString() };
+                if (nextStatus === 'asignado' && !order.tiempo_aceptacion) updateData.tiempo_aceptacion = Date.now();
+                if (nextStatus === 'entregado') updateData.tiempo_entrega = Date.now();
                 
-                if (error) throw error;
-                
+                await supabase.from('pedidos').update(updateData).eq('id', orderId);
+                showAlert('orders-alert', 'success', 'Estado actualizado');
+                loadOrders();
+            } catch (error) {
+                showAlert('orders-alert', 'error', 'Error');
+            }
+        }
+
+        async function deleteOrder(orderId) {
+            if (!confirm('¿Eliminar pedido?')) return;
+            try {
+                await supabase.from('pedidos').delete().eq('id', orderId);
+                showAlert('orders-alert', 'success', 'Pedido eliminado');
+                loadOrders();
+            } catch (error) {
+                showAlert('orders-alert', 'error', 'Error');
+            }
+        }
+
+        function viewOrderDetails(order) {
+            alert('PEDIDO #' + order.id.substring(0, 8) + '\n\nCliente: ' + order.cliente + '\nDirección: ' + order.direccion + '\nTotal: ' + formatCurrency(order.valor_pedido + order.valor_domicilio));
+        }
+
+        function openTracking(order) {
+            document.getElementById('tracking-modal').classList.add('active');
+            document.getElementById('tracking-info').innerHTML = '<div><strong>Cliente:</strong> ' + order.cliente + '</div><div><strong>Dirección:</strong> ' + order.direccion + '</div>';
+            
+            if (!trackingMap) {
+                trackingMap = L.map('tracking-map').setView([4.7110, -74.0721], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(trackingMap);
+            }
+        }
+
+        function closeTrackingModal() {
+            document.getElementById('tracking-modal').classList.remove('active');
+            if (trackingInterval) clearInterval(trackingInterval);
+            if (trackingMarker && trackingMap) trackingMap.removeLayer(trackingMarker);
+            trackingMarker = null;
+        }
+
+        async function loadAvailableDeliveries() {
+            if (!supabase) return;
+            try {
+                const result = await supabase.from('domiciliarios').select('*').in('estado', ['disponible', 'ocupado']);
                 const select = document.getElementById('order-delivery-person');
                 select.innerHTML = '<option value="">Sin asignar</option>';
                 
-                domiciliarios.forEach((delivery) => {
-                    const statusText = delivery.estado === 'disponible' ? '✅ Disponible' : '⚠️ Ocupado';
-                    const option = document.createElement('option');
-                    option.value = delivery.id;
-                    option.dataset.name = delivery.nombre;
-                    option.dataset.phone = delivery.telefono;
-                    option.textContent = delivery.nombre + ' - ' + statusText;
-                    select.appendChild(option);
-                });
+                if (result.data) {
+                    result.data.forEach(function(d) {
+                        const option = document.createElement('option');
+                        option.value = d.id;
+                        option.dataset.name = d.nombre;
+                        option.dataset.phone = d.telefono;
+                        option.textContent = d.nombre + ' - ' + (d.estado === 'disponible' ? 'Disponible' : 'Ocupado');
+                        select.appendChild(option);
+                    });
+                }
             } catch (error) {
-                console.error('Error cargando domiciliarios:', error);
+                console.error('Error:', error);
             }
         }
 
-        // Abrir modal de pedido
-        window.openOrderModal = async function(id = null) {
-            const modal = document.getElementById('order-modal');
-            const form = document.getElementById('order-form');
-            const title = document.getElementById('order-modal-title');
-            
-            currentOrderId = id;
-            await loadAvailableDeliveries();
-            
-            if (id) {
-                // Cargar datos del pedido para editar
-                const order = allOrders.find(o => o.id === id);
-                if (order) {
-                    title.textContent = 'Editar Pedido';
-                    document.getElementById('order-customer-name').value = order.cliente;
-                    document.getElementById('order-customer-phone').value = order.telefonoCliente;
-                    document.getElementById('order-address').value = order.direccion;
-                    document.getElementById('order-value').value = order.valorPedido;
-                    document.getElementById('order-delivery-fee').value = order.valorDomicilio;
-                    document.getElementById('order-payment-method').value = order.metodoPago;
-                    document.getElementById('order-delivery-person').value = order.domiciliarioId || '';
-                    document.getElementById('order-notes').value = order.notas || '';
-                    calculateTotal();
-                }
+        function openOrderModal(order) {
+            currentOrderId = order ? order.id : null;
+            document.getElementById('order-modal-title').textContent = order ? 'Editar Pedido' : 'Nuevo Pedido';
+            if (order) {
+                document.getElementById('order-customer-name').value = order.cliente;
+                document.getElementById('order-customer-phone').value = order.telefono_cliente;
+                document.getElementById('order-address').value = order.direccion;
+                document.getElementById('order-value').value = order.valor_pedido;
+                document.getElementById('order-delivery-fee').value = order.valor_domicilio;
+                document.getElementById('order-payment-method').value = order.metodo_pago;
+                document.getElementById('order-delivery-person').value = order.domiciliario_id || '';
+                document.getElementById('order-notes').value = order.notas || '';
+                calculateTotal();
             } else {
-                title.textContent = 'Nuevo Pedido';
-                form.reset();
+                document.getElementById('order-form').reset();
             }
-            
-            modal.classList.add('active');
-        };
+            loadAvailableDeliveries();
+            document.getElementById('order-modal').classList.add('active');
+        }
 
-        // Cerrar modal de pedido
-        window.closeOrderModal = function() {
+        function closeOrderModal() {
             document.getElementById('order-modal').classList.remove('active');
             document.getElementById('order-form').reset();
             currentOrderId = null;
-        };
+        }
 
-        // Guardar pedido
+        function calculateTotal() {
+            const orderValue = parseFloat(document.getElementById('order-value').value) || 0;
+            const deliveryFee = parseFloat(document.getElementById('order-delivery-fee').value) || 0;
+            document.getElementById('order-total').value = formatCurrency(orderValue + deliveryFee);
+        }
+
+        document.getElementById('btn-new-order').addEventListener('click', function() { openOrderModal(null); });
+        document.getElementById('btn-cancel-order').addEventListener('click', closeOrderModal);
+        document.getElementById('btn-refresh-orders').addEventListener('click', loadOrders);
+        document.getElementById('btn-close-tracking').addEventListener('click', closeTrackingModal);
+        document.getElementById('filter-status').addEventListener('change', filterOrders);
+        document.getElementById('order-value').addEventListener('input', calculateTotal);
+        document.getElementById('order-delivery-fee').addEventListener('input', calculateTotal);
+        document.getElementById('order-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeOrderModal();
+        });
+        document.getElementById('tracking-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeTrackingModal();
+        });
+
         document.getElementById('order-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
-            const deliverySelect = document.getElementById('order-delivery-person');
-            const selectedOption = deliverySelect.options[deliverySelect.selectedIndex];
+            const select = document.getElementById('order-delivery-person');
+            const option = select.options[select.selectedIndex];
             
             const orderData = {
                 cliente: document.getElementById('order-customer-name').value,
@@ -1809,647 +1461,174 @@
                 valor_pedido: parseFloat(document.getElementById('order-value').value),
                 valor_domicilio: parseFloat(document.getElementById('order-delivery-fee').value),
                 metodo_pago: document.getElementById('order-payment-method').value,
-                domiciliario_id: deliverySelect.value || null,
-                domiciliario_nombre: selectedOption.dataset.name || null,
-                domiciliario_telefono: selectedOption.dataset.phone || null,
-                notas: document.getElementById('order-notes').value || '',
+                domiciliario_id: select.value || null,
+                domiciliario_nombre: option.dataset.name || null,
+                domiciliario_telefono: option.dataset.phone || null,
+                notas: document.getElementById('order-notes').value,
                 updated_at: new Date().toISOString()
             };
-
-            // Determinar estado
+            
             if (!orderData.domiciliario_id) {
                 orderData.estado = 'pendiente';
-            } else if (currentOrderId) {
-                // Mantener estado actual si está editando
-                const currentOrder = allOrders.find(o => o.id === currentOrderId);
-                orderData.estado = currentOrder.estado;
             } else {
                 orderData.estado = 'asignado';
                 orderData.tiempo_aceptacion = Date.now();
             }
-
+            
             try {
                 if (currentOrderId) {
-                    // Actualizar
-                    const { error } = await supabase
-                        .from('pedidos')
-                        .update(orderData)
-                        .eq('id', currentOrderId);
-                    
-                    if (error) throw error;
-                    showAlert('orders-alert', 'success', 'Pedido actualizado correctamente');
+                    await supabase.from('pedidos').update(orderData).eq('id', currentOrderId);
+                    showAlert('orders-alert', 'success', 'Pedido actualizado');
                 } else {
-                    // Crear
                     orderData.created_at = new Date().toISOString();
-                    const { error } = await supabase
-                        .from('pedidos')
-                        .insert([orderData]);
-                    
-                    if (error) throw error;
-                    showAlert('orders-alert', 'success', 'Pedido creado correctamente');
+                    await supabase.from('pedidos').insert([orderData]);
+                    showAlert('orders-alert', 'success', 'Pedido creado');
                 }
-                
-                window.closeOrderModal();
+                closeOrderModal();
                 loadOrders();
             } catch (error) {
-                console.error('Error guardando pedido:', error);
-                showAlert('orders-alert', 'error', 'Error al guardar pedido: ' + error.message);
+                showAlert('orders-alert', 'error', 'Error al guardar');
             }
         });
 
-        // Cambiar estado del pedido
-        window.changeOrderStatus = async function(orderId) {
-            const order = allOrders.find(o => o.id === orderId);
-            if (!order) return;
-
-            const nextStatus = {
-                'pendiente': 'asignado',
-                'asignado': 'en_camino',
-                'en_camino': 'entregado'
-            }[order.estado];
-
-            if (!nextStatus) return;
-
-            const statusNames = {
-                'asignado': 'Asignado',
-                'en_camino': 'En camino',
-                'entregado': 'Entregado'
-            };
-
-            if (!confirm('¿Cambiar estado a ' + String.fromCharCode(34) + statusNames[nextStatus] + String.fromCharCode(34) + '?')) return;
-
-            try {
-                const updateData = {
-                    estado: nextStatus,
-                    fechaActualizacion: serverTimestamp()
-                };
-
-                // Si pasa a "asignado" y no tiene tiempo de aceptación
-                if (nextStatus === 'asignado' && !order.tiempoAceptacion) {
-                    updateData.tiempoAceptacion = Date.now();
-                }
-
-                // Si pasa a "entregado", guardar tiempo de entrega
-                if (nextStatus === 'entregado') {
-                    updateData.tiempoEntrega = Date.now();
-                }
-
-                await updateDoc(doc(db, 'pedidos', orderId), updateData);
-                showAlert('orders-alert', 'success', 'Estado actualizado correctamente');
-                loadOrders();
-            } catch (error) {
-                console.error('Error cambiando estado:', error);
-                showAlert('orders-alert', 'error', 'Error al cambiar estado');
-            }
-        };
-
-        // Ver detalles del pedido
-        window.viewOrderDetails = function(orderId) {
-            const order = allOrders.find(o => o.id === orderId);
-            if (!order) return;
-
-            const line1 = '📋 DETALLES DEL PEDIDO #' + orderId.substring(0, 8) + '\n\n';
-            const line2 = '👤 Cliente: ' + order.cliente + '\n';
-            const line3 = '📞 Teléfono: ' + order.telefono_cliente + '\n';
-            const line4 = '📍 Dirección: ' + order.direccion + '\n\n';
-            const line5 = '💰 Valor pedido: ' + formatCurrency(order.valor_pedido) + '\n';
-            const line6 = '🚚 Valor domicilio: ' + formatCurrency(order.valor_domicilio) + '\n';
-            const line7 = '💵 Total: ' + formatCurrency(order.valor_pedido + order.valor_domicilio) + '\n';
-            const line8 = '💳 Método de pago: ' + order.metodo_pago + '\n\n';
-            const line9 = '🏍️ Domiciliario: ' + (order.domiciliario_nombre || 'Sin asignar') + '\n';
-            const line10 = '📊 Estado: ' + order.estado + '\n';
-            const line11 = '⏱️ Tiempo: ' + (order.tiempo_aceptacion ? calculateElapsedTime(order.tiempo_aceptacion) : '--') + '\n\n';
-            const line12 = '📝 Notas: ' + (order.notas || 'Sin notas');
-            
-            const details = line1 + line2 + line3 + line4 + line5 + line6 + line7 + line8 + line9 + line10 + line11 + line12;
-
-            alert(details);
-        };
-
-        // Eliminar pedido
-        window.deleteOrder = async function(orderId) {
-            if (!confirm('¿Estás seguro de eliminar este pedido?')) return;
-            
-            try {
-                await deleteDoc(doc(db, 'pedidos', orderId));
-                showAlert('orders-alert', 'success', 'Pedido eliminado correctamente');
-                loadOrders();
-            } catch (error) {
-                console.error('Error eliminando pedido:', error);
-                showAlert('orders-alert', 'error', 'Error al eliminar pedido');
-            }
-        };
-
-        // Abrir modal de seguimiento
-        window.openTracking = async function(orderId) {
-            const order = allOrders.find(o => o.id === orderId);
-            if (!order || !order.domiciliario_id) return;
-
-            const modal = document.getElementById('tracking-modal');
-            modal.classList.add('active');
-
-            // Mostrar información del pedido
-            const infoDiv = document.getElementById('tracking-info');
-            infoDiv.innerHTML = '';
-            
-            const orderDetailDiv = document.createElement('div');
-            orderDetailDiv.className = 'order-detail';
-            
-            orderDetailDiv.innerHTML = 
-                '<div class="order-detail-item">' +
-                '<strong>Cliente</strong>' +
-                '<span>' + escapeHtml(order.cliente) + '</span>' +
-                '</div>' +
-                '<div class="order-detail-item">' +
-                '<strong>Dirección</strong>' +
-                '<span style="font-size: 13px;">' + escapeHtml(order.direccion) + '</span>' +
-                '</div>' +
-                '<div class="order-detail-item">' +
-                '<strong>Domiciliario</strong>' +
-                '<span>' + escapeHtml(order.domiciliario_nombre) + '</span>' +
-                '</div>' +
-                '<div class="order-detail-item">' +
-                '<strong>Total</strong>' +
-                '<span>' + formatCurrency(order.valor_pedido + order.valor_domicilio) + '</span>' +
-                '</div>';
-            
-            infoDiv.appendChild(orderDetailDiv);
-
-            // Inicializar mapa
-            if (!trackingMap) {
-                trackingMap = L.map('tracking-map').setView([4.7110, -74.0721], 13);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors'
-                }).addTo(trackingMap);
-            }
-
-            // Actualizar ubicación
-            updateTracking(order.domiciliario_id, order);
-            
-            // Actualizar cada 10 segundos
-            trackingInterval = setInterval(() => {
-                updateTracking(order.domiciliario_id, order);
-            }, 10000);
-        };
-
-        // Actualizar seguimiento
-        async function updateTracking(deliveryId, order) {
-            try {
-                const { data: delivery, error } = await supabase
-                    .from('domiciliarios')
-                    .select('*')
-                    .eq('id', deliveryId)
-                    .single();
-
-                if (error) throw error;
-
-                if (delivery && delivery.ubicacion) {
-                    const { lat, lng } = delivery.ubicacion;
-                    
-                    // Actualizar o crear marcador
-                    if (trackingMarker) {
-                        trackingMarker.setLatLng([lat, lng]);
-                    } else {
-                        const iconHtml = document.createElement('div');
-                        iconHtml.style.cssText = 'background: #3498db; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px;';
-                        iconHtml.textContent = '🏍️';
-                        
-                        const icon = L.divIcon({
-                            className: 'custom-marker',
-                            html: iconHtml.outerHTML,
-                            iconSize: [30, 30]
-                        });
-
-                        trackingMarker = L.marker([lat, lng], { icon }).addTo(trackingMap);
-                        
-                        const popup = document.createElement('div');
-                        popup.innerHTML = 
-                            '<strong>🏍️ ' + escapeHtml(delivery.nombre) + '</strong><br>' +
-                            '<small>Última actualización: ' + escapeHtml(new Date(delivery.ubicacion.timestamp).toLocaleTimeString('es-CO')) + '</small>';
-                        
-                        trackingMarker.bindPopup(popup);
-                    }
-
-                    // Centrar mapa
-                    trackingMap.setView([lat, lng], 15);
-
-                    // Actualizar estado y tiempo
-                    document.getElementById('tracking-status').innerHTML = 
-                        '<span class="status-badge status-en_camino">🚚 En camino</span>';
-                    document.getElementById('tracking-time').textContent = 
-                        calculateElapsedTime(order.tiempo_aceptacion);
-                } else {
-                    document.getElementById('tracking-status').innerHTML = 
-                        '<span class="badge badge-warning">⚠️ Sin ubicación disponible</span>';
-                }
-            } catch (error) {
-                console.error('Error actualizando seguimiento:', error);
-            }
-        }
-
-        // Cerrar modal de seguimiento
-        window.closeTrackingModal = function() {
-            document.getElementById('tracking-modal').classList.remove('active');
-            
-            if (trackingInterval) {
-                clearInterval(trackingInterval);
-                trackingInterval = null;
-            }
-            
-            if (trackingMarker && trackingMap) {
-                trackingMap.removeLayer(trackingMarker);
-                trackingMarker = null;
-            }
-        };
-
-        // Cerrar modales al hacer clic fuera
-        document.getElementById('order-modal').addEventListener('click', function(e) {
-            if (e.target === this) window.closeOrderModal();
-        });
-
-        document.getElementById('tracking-modal').addEventListener('click', function(e) {
-            if (e.target === this) window.closeTrackingModal();
-        });
-
-        // Inicializar cuando se abre el módulo de pedidos
-        document.querySelector('[data-module="pedidos"]').addEventListener('click', function() {
-            setTimeout(() => {
-                loadOrders();
-            }, 100);
-        });
-
-        // Actualizar pedidos periódicamente (cada 30 segundos)
-        setInterval(() => {
-            const activeModule = document.querySelector('.module-container.active');
-            if (activeModule && activeModule.id === 'module-pedidos') {
-                loadOrders();
-            }
-        }, 30000);
-
-        // ==================== MÓDULO: DASHBOARD ====================
-        
-        let statusChart = null;
-        let incomeChart = null;
-
-        // Cargar dashboard
         async function loadDashboard() {
             if (!supabase) return;
-
             try {
-                // Cargar pedidos
-                const { data: pedidos, error: ordersError } = await supabase
-                    .from('pedidos')
-                    .select('*');
+                const ordersResult = await supabase.from('pedidos').select('*');
+                const deliveriesResult = await supabase.from('domiciliarios').select('*');
                 
-                if (ordersError) throw ordersError;
-
-                // Cargar domiciliarios
-                const { data: domiciliarios, error: deliveriesError } = await supabase
-                    .from('domiciliarios')
-                    .select('*');
+                const orders = ordersResult.data || [];
+                const deliveries = deliveriesResult.data || [];
                 
-                if (deliveriesError) throw deliveriesError;
-
-                // Calcular estadísticas
-                calculateStats(pedidos || [], domiciliarios || []);
-                renderTopDeliveries(pedidos || [], domiciliarios || []);
-                renderRecentOrders(pedidos || []);
-                renderStatusChart(pedidos || []);
-                renderIncomeChart(pedidos || []);
-
+                const now = new Date();
+                const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+                const weekStart = todayStart - 518400000;
+                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+                
+                const todayOrders = orders.filter(function(o) { return new Date(o.created_at).getTime() >= todayStart; });
+                const weekOrders = orders.filter(function(o) { return new Date(o.created_at).getTime() >= weekStart; });
+                const monthOrders = orders.filter(function(o) { return new Date(o.created_at).getTime() >= monthStart; });
+                const monthIncome = monthOrders.reduce(function(sum, o) { return sum + (o.valor_pedido || 0) + (o.valor_domicilio || 0); }, 0);
+                const activeDeliveries = deliveries.filter(function(d) { return d.estado === 'disponible' || d.estado === 'ocupado'; }).length;
+                const activeOrders = orders.filter(function(o) { return o.estado === 'asignado' || o.estado === 'en_camino'; }).length;
+                const completedOrders = orders.filter(function(o) { return o.estado === 'entregado'; }).length;
+                const successRate = orders.length > 0 ? Math.round((completedOrders / orders.length) * 100) : 0;
+                
+                document.getElementById('stat-today').textContent = todayOrders.length;
+                document.getElementById('stat-week').textContent = weekOrders.length;
+                document.getElementById('stat-month').textContent = monthOrders.length;
+                document.getElementById('stat-income').textContent = formatCurrency(monthIncome);
+                document.getElementById('stat-active-delivery').textContent = activeDeliveries;
+                document.getElementById('stat-active-orders').textContent = activeOrders;
+                document.getElementById('stat-success-rate').textContent = successRate + '%';
+                
+                const deliveredOrders = orders.filter(function(o) { return o.estado === 'entregado' && o.tiempo_aceptacion && o.tiempo_entrega; });
+                let avgTime = '--';
+                if (deliveredOrders.length > 0) {
+                    const totalTime = deliveredOrders.reduce(function(sum, o) { return sum + (o.tiempo_entrega - o.tiempo_aceptacion); }, 0);
+                    const avgMinutes = Math.round((totalTime / deliveredOrders.length) / 60000);
+                    avgTime = Math.floor(avgMinutes / 60) + 'h ' + (avgMinutes % 60) + 'm';
+                }
+                document.getElementById('stat-avg-time').textContent = avgTime;
+                
+                renderTopDeliveries(orders);
+                renderStatusChart(orders);
+                renderIncomeChart(orders);
+                renderRecentOrders(orders);
             } catch (error) {
-                console.error('Error cargando dashboard:', error);
+                console.error('Error:', error);
             }
         }
 
-        // Calcular estadísticas
-        function calculateStats(orders, deliveries) {
-            const now = new Date();
-            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-            const weekStart = todayStart - (6 * 24 * 60 * 60 * 1000);
-            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-
-            // Pedidos hoy
-            const todayOrders = orders.filter(o => {
-                const orderDate = o.fechaCreacion?.toDate ? o.fechaCreacion.toDate().getTime() : Date.now();
-                return orderDate >= todayStart;
-            });
-
-            // Pedidos semana
-            const weekOrders = orders.filter(o => {
-                const orderDate = o.fechaCreacion?.toDate ? o.fechaCreacion.toDate().getTime() : Date.now();
-                return orderDate >= weekStart;
-            });
-
-            // Pedidos mes
-            const monthOrders = orders.filter(o => {
-                const orderDate = o.fechaCreacion?.toDate ? o.fechaCreacion.toDate().getTime() : Date.now();
-                return orderDate >= monthStart;
-            });
-
-            // Ingresos del mes
-            const monthIncome = monthOrders.reduce((sum, order) => {
-                return sum + (order.valorPedido || 0) + (order.valorDomicilio || 0);
-            }, 0);
-
-            // Domiciliarios activos (disponibles u ocupados)
-            const activeDeliveries = deliveries.filter(d => 
-                d.estado === 'disponible' || d.estado === 'ocupado'
-            ).length;
-
-            // Tiempo promedio de entrega
-            const deliveredOrders = orders.filter(o => o.estado === 'entregado' && o.tiempoAceptacion && o.tiempoEntrega);
-            let avgTime = '--';
-            if (deliveredOrders.length > 0) {
-                const totalTime = deliveredOrders.reduce((sum, order) => {
-                    return sum + (order.tiempoEntrega - order.tiempoAceptacion);
-                }, 0);
-                const avgMinutes = Math.round((totalTime / deliveredOrders.length) / (1000 * 60));
-                avgTime = `${Math.floor(avgMinutes / 60)}h ${avgMinutes % 60}m`;
-            }
-
-            // Pedidos activos (asignado o en camino)
-            const activeOrders = orders.filter(o => 
-                o.estado === 'asignado' || o.estado === 'en_camino'
-            ).length;
-
-            // Tasa de éxito
-            const completedOrders = orders.filter(o => o.estado === 'entregado').length;
-            const totalOrders = orders.length;
-            const successRate = totalOrders > 0 ? Math.round((completedOrders / totalOrders) * 100) : 0;
-
-            // Actualizar UI
-            document.getElementById('stat-today').textContent = todayOrders.length;
-            document.getElementById('stat-week').textContent = weekOrders.length;
-            document.getElementById('stat-month').textContent = monthOrders.length;
-            document.getElementById('stat-income').textContent = formatCurrency(monthIncome);
-            document.getElementById('stat-active-delivery').textContent = activeDeliveries;
-            document.getElementById('stat-avg-time').textContent = avgTime;
-            document.getElementById('stat-active-orders').textContent = activeOrders;
-            document.getElementById('stat-success-rate').textContent = successRate + '%';
-        }
-
-        // Renderizar top domiciliarios
-        function renderTopDeliveries(orders, deliveries) {
-            const deliveryStats = {};
-
-            // Calcular estadísticas por domiciliario
-            orders.forEach(order => {
-                if (order.domiciliario_id && order.estado === 'entregado') {
-                    if (!deliveryStats[order.domiciliario_id]) {
-                        deliveryStats[order.domiciliario_id] = {
-                            name: order.domiciliario_nombre || 'Desconocido',
-                            completed: 0,
-                            totalTime: 0,
-                            count: 0
-                        };
-                    }
-                    deliveryStats[order.domiciliario_id].completed++;
-                    
-                    if (order.tiempo_aceptacion && order.tiempo_entrega) {
-                        const time = order.tiempo_entrega - order.tiempo_aceptacion;
-                        deliveryStats[order.domiciliario_id].totalTime += time;
-                        deliveryStats[order.domiciliario_id].count++;
-                    }
-                }
-            });
-
-            // Convertir a array y ordenar
-            const topDeliveries = Object.entries(deliveryStats)
-                .map(([id, stats]) => ({
-                    ...stats,
-                    avgTime: stats.count > 0 ? Math.round(stats.totalTime / stats.count / (1000 * 60)) : 0
-                }))
-                .sort((a, b) => b.completed - a.completed)
-                .slice(0, 5);
-
-            // Renderizar
+        function renderTopDeliveries(orders) {
             const container = document.getElementById('top-deliveries-container');
-            
-            if (topDeliveries.length === 0) {
-                container.innerHTML = '<div style="text-align: center; padding: 30px; color: #7f8c8d;">No hay datos suficientes</div>';
-                return;
-            }
-
-            container.innerHTML = '';
-            topDeliveries.forEach((delivery, index) => {
-                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1) + '.';
-                
-                const itemDiv = document.createElement('div');
-                itemDiv.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #ecf0f1;';
-                
-                itemDiv.innerHTML = 
-                    '<div style="display: flex; align-items: center; gap: 15px;">' +
-                    '<span style="font-size: 24px;">' + medal + '</span>' +
-                    '<div>' +
-                    '<strong style="color: #2c3e50;">' + escapeHtml(delivery.name) + '</strong>' +
-                    '<div style="font-size: 12px; color: #7f8c8d; margin-top: 2px;">' +
-                    'Tiempo promedio: ' + delivery.avgTime + 'min' +
-                    '</div>' +
-                    '</div>' +
-                    '</div>' +
-                    '<div style="text-align: right;">' +
-                    '<div style="font-size: 24px; font-weight: bold; color: #27ae60;">' + delivery.completed + '</div>' +
-                    '<div style="font-size: 11px; color: #7f8c8d;">entregas</div>' +
-                    '</div>';
-                
-                container.appendChild(itemDiv);
-            });
+            container.innerHTML = '<div style="text-align: center; padding: 30px; color: #7f8c8d;">No hay datos suficientes</div>';
         }
 
-        // Renderizar pedidos recientes
-        function renderRecentOrders(orders) {
-            const tbody = document.getElementById('recent-orders-table');
-            const recentOrders = orders
-                .sort((a, b) => {
-                    const dateA = a.fechaCreacion?.toDate ? a.fechaCreacion.toDate().getTime() : 0;
-                    const dateB = b.fechaCreacion?.toDate ? b.fechaCreacion.toDate().getTime() : 0;
-                    return dateB - dateA;
-                })
-                .slice(0, 10);
-
-            if (recentOrders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px;">No hay pedidos</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = recentOrders.map(order => {
-                const statusBadge = {
-                    'pendiente': '<span class="status-badge status-pendiente">⏳ Pendiente</span>',
-                    'asignado': '<span class="status-badge status-asignado">👤 Asignado</span>',
-                    'en_camino': '<span class="status-badge status-en_camino">🚚 En camino</span>',
-                    'entregado': '<span class="status-badge status-entregado">✅ Entregado</span>',
-                    'cancelado': '<span class="status-badge status-cancelado">❌ Cancelado</span>'
-                }[order.estado] || order.estado;
-
-                const elapsedTime = order.tiempoAceptacion ? calculateElapsedTime(order.tiempoAceptacion) : '--';
-                const total = formatCurrency(order.valorPedido + order.valorDomicilio);
-                const orderId = order.id.substring(0, 8);
-                const deliveryName = order.domiciliarioNombre || 'Sin asignar';
-
-                return '<tr>' +
-                    '<td><strong>#' + orderId + '</strong></td>' +
-                    '<td>' + order.cliente + '</td>' +
-                    '<td>' + total + '</td>' +
-                    '<td>' + deliveryName + '</td>' +
-                    '<td>' + statusBadge + '</td>' +
-                    '<td>' + elapsedTime + '</td>' +
-                    '</tr>';
-            }).join('');
-        }
-
-        // Renderizar gráfico de estados
         function renderStatusChart(orders) {
-            const statusCount = {
-                pendiente: 0,
-                asignado: 0,
-                en_camino: 0,
-                entregado: 0,
-                cancelado: 0
-            };
-
-            orders.forEach(order => {
-                if (statusCount[order.estado] !== undefined) {
-                    statusCount[order.estado]++;
-                }
-            });
-
-            const ctx = document.getElementById('status-chart');
+            const statusCount = { pendiente: 0, asignado: 0, en_camino: 0, entregado: 0, cancelado: 0 };
+            orders.forEach(function(o) { if (statusCount[o.estado] !== undefined) statusCount[o.estado]++; });
             
-            if (statusChart) {
-                statusChart.destroy();
-            }
-
+            const ctx = document.getElementById('status-chart');
+            if (statusChart) statusChart.destroy();
+            
             statusChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Pendiente', 'Asignado', 'En Camino', 'Entregado', 'Cancelado'],
                     datasets: [{
-                        data: [
-                            statusCount.pendiente,
-                            statusCount.asignado,
-                            statusCount.en_camino,
-                            statusCount.entregado,
-                            statusCount.cancelado
-                        ],
-                        backgroundColor: [
-                            '#f39c12',
-                            '#3498db',
-                            '#2ecc71',
-                            '#27ae60',
-                            '#e74c3c'
-                        ],
-                        borderWidth: 2,
-                        borderColor: '#fff'
+                        data: [statusCount.pendiente, statusCount.asignado, statusCount.en_camino, statusCount.entregado, statusCount.cancelado],
+                        backgroundColor: ['#f39c12', '#3498db', '#2ecc71', '#27ae60', '#e74c3c']
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
             });
         }
 
-        // Renderizar gráfico de ingresos
         function renderIncomeChart(orders) {
             const last7Days = [];
             const incomeByDay = {};
-            
-            // Preparar últimos 7 días
             for (let i = 6; i >= 0; i--) {
                 const date = new Date();
                 date.setDate(date.getDate() - i);
-                const dateKey = date.toISOString().split('T')[0];
-                const dateLabel = date.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric' });
-                last7Days.push({ key: dateKey, label: dateLabel });
-                incomeByDay[dateKey] = 0;
+                const key = date.toISOString().split('T')[0];
+                const label = date.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric' });
+                last7Days.push({ key: key, label: label });
+                incomeByDay[key] = 0;
             }
-
-            // Calcular ingresos por día
-            orders.forEach(order => {
-                if (order.estado === 'entregado' && order.fechaCreacion?.toDate) {
-                    const orderDate = order.fechaCreacion.toDate();
-                    const dateKey = orderDate.toISOString().split('T')[0];
-                    if (incomeByDay[dateKey] !== undefined) {
-                        incomeByDay[dateKey] += (order.valorPedido || 0) + (order.valorDomicilio || 0);
+            
+            orders.forEach(function(o) {
+                if (o.estado === 'entregado' && o.created_at) {
+                    const key = new Date(o.created_at).toISOString().split('T')[0];
+                    if (incomeByDay[key] !== undefined) {
+                        incomeByDay[key] += (o.valor_pedido || 0) + (o.valor_domicilio || 0);
                     }
                 }
             });
-
-            const ctx = document.getElementById('income-chart');
             
-            if (incomeChart) {
-                incomeChart.destroy();
-            }
-
+            const ctx = document.getElementById('income-chart');
+            if (incomeChart) incomeChart.destroy();
+            
             incomeChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: last7Days.map(d => d.label),
+                    labels: last7Days.map(function(d) { return d.label; }),
                     datasets: [{
                         label: 'Ingresos',
-                        data: last7Days.map(d => incomeByDay[d.key]),
+                        data: last7Days.map(function(d) { return incomeByDay[d.key]; }),
                         borderColor: '#3498db',
                         backgroundColor: 'rgba(52, 152, 219, 0.1)',
                         borderWidth: 3,
                         fill: true,
-                        tension: 0.4,
-                        pointRadius: 5,
-                        pointBackgroundColor: '#3498db'
+                        tension: 0.4
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return formatCurrency(context.parsed.y);
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return '
-</html> + (value / 1000).toFixed(0) + 'k';
-                                }
-                            }
-                        }
-                    }
-                }
+                options: { responsive: true, plugins: { legend: { display: false } } }
             });
         }
 
-        // Inicializar cuando se abre el módulo de dashboard
-        document.querySelector('[data-module="dashboard"]').addEventListener('click', function() {
-            setTimeout(() => {
-                loadDashboard();
-            }, 100);
-        });
-
-        // Actualizar dashboard periódicamente (cada 60 segundos)
-        setInterval(() => {
-            const activeModule = document.querySelector('.module-container.active');
-            if (activeModule && activeModule.id === 'module-dashboard') {
-                loadDashboard();
+        function renderRecentOrders(orders) {
+            const tbody = document.getElementById('recent-orders-table');
+            tbody.innerHTML = '';
+            const recent = orders.sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at); }).slice(0, 10);
+            
+            if (recent.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px;">No hay pedidos</td></tr>';
+                return;
             }
-        }, 60000);
-    </script>
+            
+            recent.forEach(function(order) {
+                const row = tbody.insertRow();
+                row.innerHTML = '<td>#' + order.id.substring(0, 8) + '</td><td>' + order.cliente + '</td><td>' + formatCurrency(order.valor_pedido + order.valor_domicilio) + '</td><td>' + (order.domiciliario_nombre || 'Sin asignar') + '</td><td></td><td>' + (order.tiempo_aceptacion ? calculateElapsedTime(order.tiempo_aceptacion) : '--') + '</td>';
+                
+                const statusBadge = document.createElement('span');
+                statusBadge.className = 'status-badge status-' + order.estado;
+                statusBadge.textContent = order.estado.charAt(0).toUpperCase() + order.estado.slice(1);
+                row.cells[4].appendChild(statusBadge);
+            });
+        }
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        loadUsers();
+    </script>
 </body>
 </html>
