@@ -878,9 +878,13 @@
         let supabase = null;
         try {
             supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+            // Exponer supabase globalmente para acceso desde consola y depuración
+            window.supabase = supabase;
+            window.supabaseClient = supabase; // Alias adicional
             console.log('%c✅ Fluxi conectado', 'color: green; font-weight: bold;');
+            console.log('%c📡 Supabase URL:', 'color: blue;', SUPABASE_URL);
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error al conectar con Supabase:', error);
         }
 
         let currentUserId = null;
