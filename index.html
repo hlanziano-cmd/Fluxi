@@ -844,12 +844,18 @@
         <div class="modal-content" style="max-width: 800px;">
             <div class="modal-header">
                 <h3>🗺 Seguimiento del Pedido</h3>
+                <button type="button" class="btn btn-info btn-small" id="btn-refresh-tracking" style="margin-left: auto;">
+                    🔄 Actualizar
+                </button>
             </div>
             <div id="tracking-info" style="margin-bottom: 20px;"></div>
             <div id="tracking-map" style="height: 400px; border-radius: 8px; margin-bottom: 15px;"></div>
-            <div style="display: flex; gap: 10px; justify-content: space-between; align-items: center; padding: 15px; background: #f8f9fa; border-radius: 5px;">
-                <div><strong>Estado:</strong> <span id="tracking-status"></span></div>
+            <div style="display: flex; gap: 10px; justify-content: space-between; align-items: center; padding: 15px; background: #f8f9fa; border-radius: 5px; margin-bottom: 15px;">
+                <div><strong>Estado:</strong> <span id="tracking-status" class="status-badge">--</span></div>
                 <div><strong>Tiempo transcurrido:</strong> <span id="tracking-time">--</span></div>
+            </div>
+            <div id="tracking-last-update" style="text-align: center; font-size: 12px; color: #666; margin-bottom: 15px;">
+                🕒 Última actualización: <span id="tracking-update-time">--</span>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="btn-close-tracking">Cerrar</button>
@@ -890,6 +896,7 @@
         let currentUserId = null;
         let currentDeliveryId = null;
         let currentOrderId = null;
+        let currentTrackingOrder = null; // Para mantener el pedido que se está rastreando
         let allOrders = [];
         let map = null;
         let markers = {};
@@ -1358,13 +1365,15 @@
         }
 
         function openTracking(order) {
+            currentTrackingOrder = order; // Guardar el pedido actual
             document.getElementById('tracking-modal').classList.add('active');
             document.getElementById('tracking-info').innerHTML = `
+                <div><strong>Pedido ID:</strong> #${order.id.substring(0, 8)}</div>
                 <div><strong>Cliente:</strong> ${order.cliente}</div>
                 <div><strong>Dirección:</strong> ${order.direccion}</div>
                 <div><strong>Domiciliario:</strong> ${order.domiciliario_nombre || 'Sin asignar'}</div>
                 <div style="margin-top: 10px; padding: 10px; background: #e3f2fd; border-radius: 5px; font-size: 12px;">
-                    📍 La ubicación se actualiza automáticamente cada minuto
+                    📍 Actualización automática cada 30 segundos. Usa el botón "🔄 Actualizar" para actualizar manualmente.
                 </div>
             `;
             
@@ -1374,12 +1383,63 @@
             }
             
             if (order.domiciliario_id) {
-                loadDeliveryLocation(order.domiciliario_id);
+                updateTrackingInfo(); // Primera actualización inmediata
                 
-                // Actualizar ubicación cada 1 minuto
+                // Actualizar ubicación cada 30 segundos (más frecuente)
                 trackingUpdateInterval = setInterval(() => {
-                    loadDeliveryLocation(order.domiciliario_id);
-                }, 60000);
+                    updateTrackingInfo();
+                }, 30000);
+            } else {
+                // Si no hay domiciliario asignado
+                document.getElementById('tracking-status').innerHTML = '<span class="status-badge status-pendiente">Sin asignar</span>';
+                document.getElementById('tracking-time').textContent = '--';
+                document.getElementById('tracking-update-time').textContent = new Date().toLocaleTimeString('es-CO');
+            }
+        }
+
+        async function updateTrackingInfo() {
+            if (!currentTrackingOrder) return;
+            
+            try {
+                // 1. Obtener información actualizada del pedido
+                const { data: orderData } = await supabase
+                    .from('pedidos')
+                    .select('*')
+                    .eq('id', currentTrackingOrder.id)
+                    .single();
+                
+                if (orderData) {
+                    // Actualizar el pedido actual con datos frescos
+                    currentTrackingOrder = orderData;
+                    
+                    // 2. Actualizar el ESTADO
+                    const statusBadge = document.getElementById('tracking-status');
+                    if (statusBadge) {
+                        statusBadge.className = 'status-badge status-' + orderData.estado;
+                        statusBadge.textContent = orderData.estado.charAt(0).toUpperCase() + orderData.estado.slice(1);
+                    }
+                    
+                    // 3. Actualizar el TIEMPO TRANSCURRIDO
+                    const timeSpan = document.getElementById('tracking-time');
+                    if (timeSpan) {
+                        if (orderData.tiempo_aceptacion) {
+                            timeSpan.textContent = calculateElapsedTime(orderData.tiempo_aceptacion);
+                        } else {
+                            timeSpan.textContent = '--';
+                        }
+                    }
+                }
+                
+                // 4. Actualizar la UBICACIÓN GPS si hay domiciliario
+                if (currentTrackingOrder.domiciliario_id) {
+                    await loadDeliveryLocation(currentTrackingOrder.domiciliario_id);
+                }
+                
+                // 5. Actualizar hora de última actualización
+                document.getElementById('tracking-update-time').textContent = new Date().toLocaleTimeString('es-CO');
+                
+            } catch (error) {
+                console.error('Error al actualizar tracking:', error);
             }
         }
 
@@ -1395,20 +1455,47 @@
                     const diffMinutes = Math.floor((now - lastUpdate) / 60000);
                     const timeAgo = diffMinutes === 0 ? 'Hace menos de 1 minuto' : 
                                    diffMinutes === 1 ? 'Hace 1 minuto' : 
+                                   diffMinutes > 60 ? `Hace ${Math.floor(diffMinutes/60)}h ${diffMinutes%60}m` :
                                    `Hace ${diffMinutes} minutos`;
                     
                     const accuracy = data.ubicacion.accuracy ? ` (±${Math.round(data.ubicacion.accuracy)}m)` : '';
                     
-                    trackingMarker = L.marker([data.ubicacion.lat, data.ubicacion.lng]).addTo(trackingMap);
+                    // Color del marcador según antigüedad
+                    let markerColor = '#27ae60'; // Verde por defecto
+                    if (diffMinutes > 30) markerColor = '#e74c3c'; // Rojo si es muy antigua
+                    else if (diffMinutes > 10) markerColor = '#f39c12'; // Amarillo si es un poco antigua
+                    
+                    // Crear icono personalizado
+                    const iconDiv = document.createElement('div');
+                    iconDiv.style.cssText = `background:${markerColor};width:40px;height:40px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:20px`;
+                    iconDiv.textContent = '🏍️';
+                    const customIcon = L.divIcon({ 
+                        className: 'custom-marker', 
+                        html: iconDiv.outerHTML, 
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 20]
+                    });
+                    
+                    trackingMarker = L.marker([data.ubicacion.lat, data.ubicacion.lng], { icon: customIcon }).addTo(trackingMap);
                     trackingMarker.bindPopup(`
-                        <strong>${data.nombre}</strong><br>
-                        📍 Ubicación actual<br>
-                        <small>🕒 ${timeAgo}${accuracy}</small>
+                        <div style="text-align: center;">
+                            <strong style="font-size: 14px;">${data.nombre}</strong><br>
+                            <div style="margin: 5px 0;">📍 Ubicación actual</div>
+                            <small style="color: #666;">🕒 ${timeAgo}${accuracy}</small><br>
+                            <small style="color: #999;">Lat: ${data.ubicacion.lat.toFixed(6)}, Lng: ${data.ubicacion.lng.toFixed(6)}</small>
+                        </div>
                     `).openPopup();
                     trackingMap.setView([data.ubicacion.lat, data.ubicacion.lng], 15);
+                } else {
+                    // No hay ubicación disponible
+                    console.warn('No hay ubicación GPS disponible para este domiciliario');
+                    if (trackingMarker) {
+                        trackingMap.removeLayer(trackingMarker);
+                        trackingMarker = null;
+                    }
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error al cargar ubicación:', error);
             }
         }
 
@@ -1416,6 +1503,7 @@
             document.getElementById('tracking-modal').classList.remove('active');
             if (trackingMarker && trackingMap) trackingMap.removeLayer(trackingMarker);
             trackingMarker = null;
+            currentTrackingOrder = null; // Limpiar el pedido actual
             
             // Detener actualización automática
             if (trackingUpdateInterval) {
@@ -1486,6 +1574,7 @@
         document.getElementById('btn-cancel-order').addEventListener('click', closeOrderModal);
         document.getElementById('btn-refresh-orders').addEventListener('click', loadOrders);
         document.getElementById('btn-close-tracking').addEventListener('click', closeTrackingModal);
+        document.getElementById('btn-refresh-tracking').addEventListener('click', updateTrackingInfo);
         document.getElementById('filter-status').addEventListener('change', filterOrders);
         document.getElementById('order-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeOrderModal(); });
         document.getElementById('tracking-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeTrackingModal(); });
