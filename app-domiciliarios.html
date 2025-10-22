@@ -650,6 +650,20 @@
                 .subscribe();
         }
 
+        function isLocationRecent(locationData, maxAgeMinutes = 1) {
+            if (!locationData || !locationData.timestamp) {
+                return false;
+            }
+            
+            const locationTimestamp = new Date(locationData.timestamp);
+            const now = new Date();
+            const diffMinutes = (now - locationTimestamp) / 1000 / 60;
+            
+            console.log(`🕐 Verificando edad de ubicación: ${diffMinutes.toFixed(2)} minutos (máximo: ${maxAgeMinutes})`);
+            
+            return diffMinutes <= maxAgeMinutes;
+        }
+
         function formatCurrency(value) {
             return new Intl.NumberFormat('es-CO', { 
                 style: 'currency', 
@@ -761,12 +775,28 @@
 
         async function startLocationTracking() {
             try {
+                console.log('🔄 Iniciando seguimiento de ubicación...');
+                
                 // Paso 1: Solicitar permiso de ubicación
                 await requestLocationPermission();
+                console.log('✅ Permisos de ubicación obtenidos');
                 
                 // Paso 2: Obtener ubicación inicial y verificar que funcione
                 await updateLocation();
                 console.log('✅ Ubicación inicial obtenida exitosamente');
+
+                // Paso 2.5: Verificar que efectivamente se guardó una ubicación MUY reciente
+                const { data: checkData } = await supabase
+                    .from('domiciliarios')
+                    .select('ubicacion')
+                    .eq('id', currentDelivery.id)
+                    .single();
+
+                if (!checkData || !checkData.ubicacion || !isLocationRecent(checkData.ubicacion, 0.5)) {
+                    throw new Error('No se pudo obtener tu ubicación actual. Por favor, intenta nuevamente.');
+                }
+
+                console.log('✅ Ubicación guardada y verificada como reciente');
 
                 // Paso 3: Configurar actualizaciones periódicas
                 locationUpdateInterval = setInterval(async () => {
@@ -818,11 +848,11 @@
                 
                 // Mostrar mensaje específico según el error
                 let errorMessage = 'No se pudo activar la ubicación. ';
-                if (error.message.includes('denegados')) {
+                if (error.message.includes('denegados') || error.message.includes('denied')) {
                     errorMessage = '❌ Permisos de ubicación denegados. Debes permitir el acceso a la ubicación para aceptar pedidos.';
-                } else if (error.message.includes('no disponible')) {
+                } else if (error.message.includes('no disponible') || error.message.includes('unavailable')) {
                     errorMessage = '❌ Ubicación no disponible. Verifica que el GPS esté activado.';
-                } else if (error.message.includes('Tiempo de espera')) {
+                } else if (error.message.includes('Tiempo de espera') || error.message.includes('timeout')) {
                     errorMessage = '❌ No se pudo obtener tu ubicación. Verifica tu conexión y que el GPS esté activado.';
                 } else {
                     errorMessage += error.message;
@@ -1094,11 +1124,14 @@
             buttons.forEach(btn => btn.disabled = true);
 
             try {
+                console.log('🔍 Iniciando proceso de aceptación de pedido...');
+                
                 // Verificar que el seguimiento de ubicación esté activo
                 const locationEnabled = await startLocationTracking();
+                console.log('🔍 locationEnabled:', locationEnabled);
                 
                 if (!locationEnabled) {
-                    throw new Error('No se pudo activar el seguimiento de ubicación. Debes permitir el acceso a la ubicación para aceptar pedidos.');
+                    throw new Error('No se pudo activar el seguimiento de ubicación. Debes permitir el acceso a tu ubicación para aceptar pedidos.');
                 }
 
                 // Verificar que efectivamente tenemos una ubicación guardada
@@ -1108,11 +1141,18 @@
                     .eq('id', currentDelivery.id)
                     .single();
 
+                console.log('🔍 deliveryData:', deliveryData);
+
                 if (!deliveryData || !deliveryData.ubicacion || !deliveryData.ubicacion.lat) {
                     throw new Error('No se pudo verificar tu ubicación. Intenta nuevamente.');
                 }
 
-                console.log('✅ Ubicación verificada:', deliveryData.ubicacion);
+                // NUEVA VALIDACIÓN: Verificar que la ubicación sea reciente (menos de 1 minuto)
+                if (!isLocationRecent(deliveryData.ubicacion, 1)) {
+                    throw new Error('Tu ubicación no está actualizada. Por favor, espera un momento e intenta de nuevo. (Edad máxima: 1 minuto)');
+                }
+
+                console.log('✅ Ubicación verificada y actual:', deliveryData.ubicacion);
 
                 // Aceptar el pedido
                 const { error } = await supabase
@@ -1138,8 +1178,8 @@
                 await loadOrders();
                 
             } catch (error) {
-                console.error('Error al aceptar el pedido:', error);
-                showAlert('❌ Error al aceptar el pedido: ' + error.message, 'danger');
+                console.error('❌ Error al aceptar el pedido:', error);
+                showAlert('❌ Error: ' + error.message, 'danger');
                 
                 // Si falló, detener el seguimiento de ubicación
                 stopLocationTracking();
