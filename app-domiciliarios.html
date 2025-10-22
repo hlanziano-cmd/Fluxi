@@ -485,6 +485,7 @@
         let currentDelivery = null;
         let activeOrder = null;
         let locationWatchId = null;
+        let locationUpdateInterval = null;
         let timerInterval = null;
         let timerStartTime = null;
         let realtimeChannel = null;
@@ -625,16 +626,59 @@
             });
         }
 
+        let locationUpdateInterval = null;
+
+        async function updateLocation() {
+            if (!navigator.geolocation || !currentDelivery) return;
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const locationData = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                        timestamp: new Date().toISOString(),
+                        accuracy: position.coords.accuracy
+                    };
+
+                    try {
+                        await supabase
+                            .from('domiciliarios')
+                            .update({ ubicacion: locationData })
+                            .eq('id', currentDelivery.id);
+
+                        document.getElementById('location-indicator').classList.add('active');
+                        document.getElementById('location-indicator').classList.remove('inactive');
+                        document.getElementById('location-status').textContent = 'Ubicación activa - Actualizado: ' + new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+                    } catch (error) {
+                        console.error('Error actualizando ubicación:', error);
+                    }
+                },
+                (error) => {
+                    console.error('Error de geolocalización:', error);
+                    showAlert('Error al obtener ubicación. Verifica los permisos.', 'danger');
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+
         async function startLocationTracking() {
             try {
                 await requestLocationPermission();
                 
+                // Actualizar ubicación inmediatamente
+                await updateLocation();
+
+                // Actualizar ubicación cada 1 minuto (60000 ms)
+                locationUpdateInterval = setInterval(updateLocation, 60000);
+
+                // También mantener watchPosition para actualizaciones en movimiento
                 locationWatchId = navigator.geolocation.watchPosition(
                     async (position) => {
                         const locationData = {
                             lat: position.coords.latitude,
                             lng: position.coords.longitude,
-                            timestamp: new Date().toISOString()
+                            timestamp: new Date().toISOString(),
+                            accuracy: position.coords.accuracy
                         };
 
                         await supabase
@@ -644,13 +688,12 @@
 
                         document.getElementById('location-indicator').classList.add('active');
                         document.getElementById('location-indicator').classList.remove('inactive');
-                        document.getElementById('location-status').textContent = 'Ubicación activa';
+                        document.getElementById('location-status').textContent = 'Ubicación activa - Actualizado: ' + new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
                     },
                     (error) => {
                         console.error('Error de geolocalización:', error);
-                        showAlert('Error al obtener ubicación. Verifica los permisos.', 'danger');
                     },
-                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 }
                 );
 
                 return true;
@@ -664,6 +707,10 @@
             if (locationWatchId) {
                 navigator.geolocation.clearWatch(locationWatchId);
                 locationWatchId = null;
+            }
+            if (locationUpdateInterval) {
+                clearInterval(locationUpdateInterval);
+                locationUpdateInterval = null;
             }
             document.getElementById('location-indicator').classList.remove('active');
             document.getElementById('location-indicator').classList.add('inactive');
