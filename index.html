@@ -1384,30 +1384,84 @@
                 </div>
             `;
             
-            if (!trackingMap) {
-                trackingMap = L.map('tracking-map').setView([4.7110, -74.0721], 13);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(trackingMap);
+            // Inicializar mapa con timeout para asegurar que el DOM está listo
+            setTimeout(() => {
+                initializeTrackingMap();
+                
+                if (order.domiciliario_id) {
+                    console.log('🔄 Iniciando actualización automática...');
+                    updateTrackingInfo(); // Primera actualización inmediata
+                    
+                    // Actualizar ubicación cada 30 segundos (más frecuente)
+                    trackingUpdateInterval = setInterval(() => {
+                        updateTrackingInfo();
+                    }, 30000);
+                } else {
+                    // Si no hay domiciliario asignado
+                    console.warn('⚠️ Pedido sin domiciliario asignado');
+                    document.getElementById('tracking-status').innerHTML = '<span class="status-badge status-pendiente">Sin asignar</span>';
+                    document.getElementById('tracking-time').textContent = '--';
+                    document.getElementById('tracking-update-time').textContent = new Date().toLocaleTimeString('es-CO');
+                }
+            }, 100); // Pequeño delay para asegurar que el modal esté visible
+        }
+        
+        // Nueva función para inicializar o reinicializar el mapa
+        function initializeTrackingMap() {
+            console.log('🗺️ Inicializando mapa de tracking...');
+            
+            // Verificar que el elemento existe
+            const mapElement = document.getElementById('tracking-map');
+            if (!mapElement) {
+                console.error('❌ ERROR: El elemento tracking-map no existe en el DOM');
+                return false;
             }
             
-            if (order.domiciliario_id) {
-                console.log('🔄 Iniciando actualización automática...');
-                updateTrackingInfo(); // Primera actualización inmediata
+            try {
+                // Si el mapa ya existe, removerlo primero
+                if (trackingMap) {
+                    console.log('   - Removiendo mapa anterior...');
+                    trackingMap.remove();
+                    trackingMap = null;
+                }
                 
-                // Actualizar ubicación cada 30 segundos (más frecuente)
-                trackingUpdateInterval = setInterval(() => {
-                    updateTrackingInfo();
-                }, 30000);
-            } else {
-                // Si no hay domiciliario asignado
-                console.warn('⚠️ Pedido sin domiciliario asignado');
-                document.getElementById('tracking-status').innerHTML = '<span class="status-badge status-pendiente">Sin asignar</span>';
-                document.getElementById('tracking-time').textContent = '--';
-                document.getElementById('tracking-update-time').textContent = new Date().toLocaleTimeString('es-CO');
+                // Limpiar el contenedor del mapa
+                mapElement.innerHTML = '';
+                
+                // Crear nuevo mapa
+                console.log('   - Creando nuevo mapa...');
+                trackingMap = L.map('tracking-map').setView([4.7110, -74.0721], 13);
+                
+                // Agregar capa de tiles
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 19
+                }).addTo(trackingMap);
+                
+                // Exponer globalmente para depuración
+                window.trackingMap = trackingMap;
+                
+                console.log('✅ Mapa inicializado correctamente');
+                
+                // Forzar re-render del mapa
+                setTimeout(() => {
+                    if (trackingMap) {
+                        trackingMap.invalidateSize();
+                    }
+                }, 100);
+                
+                return true;
+                
+            } catch (error) {
+                console.error('❌ ERROR al inicializar el mapa:', error);
+                alert('Error al inicializar el mapa. Intenta recargar la página.');
+                return false;
             }
         }
         
         // Exponer globalmente
         window.openTracking = openTracking;
+        window.initializeTrackingMap = initializeTrackingMap;
 
         async function updateTrackingInfo() {
             if (!currentTrackingOrder) {
@@ -1476,10 +1530,41 @@
         window.updateTrackingInfo = updateTrackingInfo;
 
         async function loadDeliveryLocation(deliveryId) {
+            console.log('📍 Cargando ubicación del domiciliario:', deliveryId.substring(0, 8));
+            
+            // Verificar que el mapa esté inicializado
+            if (!trackingMap) {
+                console.warn('⚠️ Mapa no inicializado, intentando inicializar...');
+                const initialized = initializeTrackingMap();
+                if (!initialized) {
+                    console.error('❌ No se pudo inicializar el mapa');
+                    return;
+                }
+            }
+            
             try {
-                const { data } = await supabase.from('domiciliarios').select('ubicacion, nombre').eq('id', deliveryId).single();
+                const { data, error } = await supabase
+                    .from('domiciliarios')
+                    .select('ubicacion, nombre')
+                    .eq('id', deliveryId)
+                    .single();
+                
+                if (error) {
+                    console.error('❌ Error al consultar ubicación:', error);
+                    return;
+                }
+                
                 if (data && data.ubicacion && data.ubicacion.lat && data.ubicacion.lng) {
-                    if (trackingMarker) trackingMap.removeLayer(trackingMarker);
+                    console.log('✅ Ubicación encontrada:', {
+                        lat: data.ubicacion.lat.toFixed(6),
+                        lng: data.ubicacion.lng.toFixed(6)
+                    });
+                    
+                    // Remover marcador anterior
+                    if (trackingMarker) {
+                        trackingMap.removeLayer(trackingMarker);
+                        console.log('   - Marcador anterior removido');
+                    }
                     
                     // Calcular tiempo desde última actualización
                     const lastUpdate = new Date(data.ubicacion.timestamp);
@@ -1497,6 +1582,8 @@
                     if (diffMinutes > 30) markerColor = '#e74c3c'; // Rojo si es muy antigua
                     else if (diffMinutes > 10) markerColor = '#f39c12'; // Amarillo si es un poco antigua
                     
+                    console.log('   - Antigüedad:', diffMinutes, 'minutos -', markerColor === '#27ae60' ? '🟢 Reciente' : markerColor === '#f39c12' ? '🟡 Antigua' : '🔴 Muy antigua');
+                    
                     // Crear icono personalizado
                     const iconDiv = document.createElement('div');
                     iconDiv.style.cssText = `background:${markerColor};width:40px;height:40px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:20px`;
@@ -1508,7 +1595,10 @@
                         iconAnchor: [20, 20]
                     });
                     
-                    trackingMarker = L.marker([data.ubicacion.lat, data.ubicacion.lng], { icon: customIcon }).addTo(trackingMap);
+                    // Crear y agregar marcador
+                    trackingMarker = L.marker([data.ubicacion.lat, data.ubicacion.lng], { icon: customIcon })
+                        .addTo(trackingMap);
+                    
                     trackingMarker.bindPopup(`
                         <div style="text-align: center;">
                             <strong style="font-size: 14px;">${data.nombre}</strong><br>
@@ -1517,34 +1607,70 @@
                             <small style="color: #999;">Lat: ${data.ubicacion.lat.toFixed(6)}, Lng: ${data.ubicacion.lng.toFixed(6)}</small>
                         </div>
                     `).openPopup();
+                    
+                    // Centrar el mapa en la ubicación
                     trackingMap.setView([data.ubicacion.lat, data.ubicacion.lng], 15);
+                    
+                    // Forzar re-render del mapa
+                    setTimeout(() => {
+                        if (trackingMap) {
+                            trackingMap.invalidateSize();
+                        }
+                    }, 100);
+                    
+                    // Exponer marcador globalmente para depuración
+                    window.trackingMarker = trackingMarker;
+                    
+                    console.log('✅ Marcador actualizado y centrado en el mapa');
+                    
                 } else {
                     // No hay ubicación disponible
-                    console.warn('No hay ubicación GPS disponible para este domiciliario');
+                    console.warn('⚠️ No hay ubicación GPS disponible para este domiciliario');
+                    console.log('   El domiciliario debe:');
+                    console.log('   1. Abrir su app');
+                    console.log('   2. Iniciar sesión');
+                    console.log('   3. Activar GPS');
+                    
                     if (trackingMarker) {
                         trackingMap.removeLayer(trackingMarker);
                         trackingMarker = null;
                     }
                 }
             } catch (error) {
-                console.error('Error al cargar ubicación:', error);
+                console.error('❌ Error al cargar ubicación:', error);
             }
         }
 
         function closeTrackingModal() {
             console.log('❌ Cerrando modal de tracking');
             document.getElementById('tracking-modal').classList.remove('active');
-            if (trackingMarker && trackingMap) trackingMap.removeLayer(trackingMarker);
+            
+            // Limpiar marcador
+            if (trackingMarker && trackingMap) {
+                try {
+                    trackingMap.removeLayer(trackingMarker);
+                    console.log('   - Marcador removido');
+                } catch (error) {
+                    console.warn('   - Error al remover marcador:', error);
+                }
+            }
             trackingMarker = null;
-            currentTrackingOrder = null; // Limpiar el pedido actual
-            window.currentTrackingOrder = null; // Limpiar también en window
+            window.trackingMarker = null;
+            
+            // Limpiar pedido actual
+            currentTrackingOrder = null;
+            window.currentTrackingOrder = null;
             
             // Detener actualización automática
             if (trackingUpdateInterval) {
                 clearInterval(trackingUpdateInterval);
                 trackingUpdateInterval = null;
-                console.log('⏹ Intervalo de actualización detenido');
+                console.log('   - Intervalo de actualización detenido');
             }
+            
+            // NO destruir el mapa, solo dejarlo para reutilizar
+            // trackingMap se reutilizará en la próxima apertura
+            console.log('✅ Modal cerrado correctamente');
         }
 
         async function loadAvailableDeliveries() {
