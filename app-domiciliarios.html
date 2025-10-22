@@ -436,6 +436,116 @@
         .login-help li {
             margin: 5px 0;
         }
+
+        .location-control {
+            background: white;
+            border: 2px solid #ecf0f1;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .location-control.active {
+            border-color: #27ae60;
+            background: linear-gradient(135deg, rgba(39, 174, 96, 0.05) 0%, rgba(39, 174, 96, 0.1) 100%);
+        }
+
+        .location-control.inactive {
+            border-color: #e74c3c;
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.05) 0%, rgba(231, 76, 60, 0.1) 100%);
+        }
+
+        .location-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .location-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .location-message {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .location-message.success {
+            color: #27ae60;
+        }
+
+        .location-message.error {
+            color: #e74c3c;
+        }
+
+        .btn-location {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-location.activate {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+        }
+
+        .btn-location.activate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .btn-location.deactivate {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-location:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .location-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(39, 174, 96, 0.1);
+            border-radius: 8px;
+            font-size: 13px;
+            color: #27ae60;
+            margin-top: 10px;
+        }
+
+        .location-warning {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(231, 76, 60, 0.1);
+            border-radius: 8px;
+            font-size: 13px;
+            color: #e74c3c;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -482,6 +592,42 @@
             </div>
 
             <div class="content">
+                <!-- Location Control -->
+                <div id="location-control" class="location-control inactive">
+                    <div class="location-header">
+                        <div class="location-title">
+                            <span id="location-icon">📍</span>
+                            <span>Control de Ubicación</span>
+                        </div>
+                        <span class="status-indicator inactive" id="location-indicator-main"></span>
+                    </div>
+                    
+                    <div id="location-warning" class="location-warning">
+                        <span>⚠️</span>
+                        <div>
+                            <strong>Ubicación desactivada</strong><br>
+                            Debes activar tu ubicación para poder aceptar pedidos. El cliente necesita ver dónde estás en tiempo real.
+                        </div>
+                    </div>
+                    
+                    <div id="location-message" class="location-message">
+                        Toca el botón para compartir tu ubicación
+                    </div>
+                    
+                    <button id="btn-toggle-location" class="btn-location activate" onclick="window.toggleLocation()">
+                        <span id="location-btn-icon">📍</span>
+                        <span id="location-btn-text">Activar Ubicación</span>
+                    </button>
+                    
+                    <div id="location-info" class="location-info hidden">
+                        <span>✅</span>
+                        <div>
+                            <strong>Ubicación compartida</strong><br>
+                            <span id="location-status-detail">Actualizado: --:--</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="status-bar">
                     <div class="status-item">
                         <div class="label">Pedidos Hoy</div>
@@ -539,6 +685,7 @@
         let timerInterval = null;
         let timerStartTime = null;
         let realtimeChannel = null;
+        let isLocationActive = false; // Nueva variable para trackear estado de ubicación
 
         function showAlert(message, type = 'info') {
             const container = document.getElementById('alert-container') || document.getElementById('login-alert');
@@ -650,20 +797,6 @@
                 .subscribe();
         }
 
-        function isLocationRecent(locationData, maxAgeMinutes = 1) {
-            if (!locationData || !locationData.timestamp) {
-                return false;
-            }
-            
-            const locationTimestamp = new Date(locationData.timestamp);
-            const now = new Date();
-            const diffMinutes = (now - locationTimestamp) / 1000 / 60;
-            
-            console.log(`🕐 Verificando edad de ubicación: ${diffMinutes.toFixed(2)} minutos (máximo: ${maxAgeMinutes})`);
-            
-            return diffMinutes <= maxAgeMinutes;
-        }
-
         function formatCurrency(value) {
             return new Intl.NumberFormat('es-CO', { 
                 style: 'currency', 
@@ -679,14 +812,22 @@
             return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         }
 
-        function startTimer() {
+        function startTimer(startTime = null) {
             if (timerInterval) return;
             
-            timerStartTime = Date.now();
+            // Si se proporciona un tiempo de inicio, usarlo; sino, usar el tiempo actual
+            timerStartTime = startTime || Date.now();
+            
+            // Actualizar inmediatamente
+            const elapsed = Math.floor((Date.now() - timerStartTime) / 1000);
+            document.getElementById('timer-display').textContent = formatTime(elapsed);
+            
             timerInterval = setInterval(() => {
                 const elapsed = Math.floor((Date.now() - timerStartTime) / 1000);
                 document.getElementById('timer-display').textContent = formatTime(elapsed);
             }, 1000);
+            
+            console.log('⏱️ Temporizador iniciado desde:', new Date(timerStartTime).toLocaleTimeString());
         }
 
         function stopTimer() {
@@ -744,6 +885,9 @@
                             document.getElementById('location-indicator').classList.remove('inactive');
                             document.getElementById('location-status').textContent = 'Ubicación activa - Actualizado: ' + new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
                             
+                            // Actualizar UI del control de ubicación
+                            updateLocationUI(true);
+                            
                             resolve(locationData);
                         } catch (error) {
                             console.error('Error actualizando ubicación:', error);
@@ -773,6 +917,47 @@
             });
         }
 
+        function updateLocationUI(active) {
+            const control = document.getElementById('location-control');
+            const warning = document.getElementById('location-warning');
+            const info = document.getElementById('location-info');
+            const message = document.getElementById('location-message');
+            const btn = document.getElementById('btn-toggle-location');
+            const btnText = document.getElementById('location-btn-text');
+            const btnIcon = document.getElementById('location-btn-icon');
+            const indicator = document.getElementById('location-indicator-main');
+            const statusDetail = document.getElementById('location-status-detail');
+
+            if (active) {
+                control.classList.remove('inactive');
+                control.classList.add('active');
+                warning.classList.add('hidden');
+                info.classList.remove('hidden');
+                message.textContent = 'Tu ubicación se está compartiendo en tiempo real';
+                message.classList.add('success');
+                btn.classList.remove('activate');
+                btn.classList.add('deactivate');
+                btnText.textContent = 'Desactivar Ubicación';
+                btnIcon.textContent = '🛑';
+                indicator.classList.remove('inactive');
+                indicator.classList.add('active');
+                statusDetail.textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+            } else {
+                control.classList.remove('active');
+                control.classList.add('inactive');
+                warning.classList.remove('hidden');
+                info.classList.add('hidden');
+                message.textContent = 'Toca el botón para compartir tu ubicación';
+                message.classList.remove('success');
+                btn.classList.remove('deactivate');
+                btn.classList.add('activate');
+                btnText.textContent = 'Activar Ubicación';
+                btnIcon.textContent = '📍';
+                indicator.classList.remove('active');
+                indicator.classList.add('inactive');
+            }
+        }
+
         async function startLocationTracking() {
             try {
                 console.log('🔄 Iniciando seguimiento de ubicación...');
@@ -784,19 +969,6 @@
                 // Paso 2: Obtener ubicación inicial y verificar que funcione
                 await updateLocation();
                 console.log('✅ Ubicación inicial obtenida exitosamente');
-
-                // Paso 2.5: Verificar que efectivamente se guardó una ubicación MUY reciente
-                const { data: checkData } = await supabase
-                    .from('domiciliarios')
-                    .select('ubicacion')
-                    .eq('id', currentDelivery.id)
-                    .single();
-
-                if (!checkData || !checkData.ubicacion || !isLocationRecent(checkData.ubicacion, 0.5)) {
-                    throw new Error('No se pudo obtener tu ubicación actual. Por favor, intenta nuevamente.');
-                }
-
-                console.log('✅ Ubicación guardada y verificada como reciente');
 
                 // Paso 3: Configurar actualizaciones periódicas
                 locationUpdateInterval = setInterval(async () => {
@@ -826,6 +998,9 @@
                             document.getElementById('location-indicator').classList.add('active');
                             document.getElementById('location-indicator').classList.remove('inactive');
                             document.getElementById('location-status').textContent = 'Ubicación activa - Actualizado: ' + new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+                            
+                            // Actualizar UI del control de ubicación
+                            updateLocationUI(true);
                         } catch (error) {
                             console.error('Error en watchPosition:', error);
                         }
@@ -838,6 +1013,8 @@
                 );
 
                 console.log('✅ Seguimiento de ubicación iniciado correctamente');
+                isLocationActive = true; // Marcar ubicación como activa
+                updateLocationUI(true); // Actualizar UI
                 return true;
                 
             } catch (error) {
@@ -859,6 +1036,8 @@
                 }
                 
                 showAlert(errorMessage, 'danger');
+                isLocationActive = false;
+                updateLocationUI(false);
                 return false;
             }
         }
@@ -875,7 +1054,52 @@
             document.getElementById('location-indicator').classList.remove('active');
             document.getElementById('location-indicator').classList.add('inactive');
             document.getElementById('location-status').textContent = 'Ubicación desactivada';
+            
+            // Actualizar estado y UI
+            isLocationActive = false;
+            updateLocationUI(false);
         }
+
+        window.toggleLocation = async function() {
+            const btn = document.getElementById('btn-toggle-location');
+            
+            if (isLocationActive) {
+                // Desactivar ubicación
+                if (activeOrder) {
+                    showAlert('⚠️ No puedes desactivar la ubicación mientras tienes un pedido activo.', 'warning');
+                    return;
+                }
+                
+                if (confirm('¿Estás seguro de desactivar tu ubicación? No podrás aceptar pedidos hasta que la vuelvas a activar.')) {
+                    stopLocationTracking();
+                    showAlert('✅ Ubicación desactivada', 'info');
+                }
+            } else {
+                // Activar ubicación
+                btn.disabled = true;
+                btn.textContent = 'Activando...';
+                
+                try {
+                    const success = await startLocationTracking();
+                    if (success) {
+                        showAlert('✅ ¡Ubicación activada! Ahora puedes aceptar pedidos.', 'success');
+                    }
+                } catch (error) {
+                    showAlert('❌ Error al activar ubicación: ' + error.message, 'danger');
+                } finally {
+                    btn.disabled = false;
+                    const btnText = document.getElementById('location-btn-text');
+                    const btnIcon = document.getElementById('location-btn-icon');
+                    if (isLocationActive) {
+                        btnText.textContent = 'Desactivar Ubicación';
+                        btnIcon.textContent = '🛑';
+                    } else {
+                        btnText.textContent = 'Activar Ubicación';
+                        btnIcon.textContent = '📍';
+                    }
+                }
+            }
+        };
 
         async function login(phone) {
             const loginBtn = document.getElementById('login-btn');
@@ -957,6 +1181,12 @@
                 if (activeOrders && activeOrders.length > 0) {
                     activeOrder = activeOrders[0];
                     renderActiveOrder(activeOrder);
+                    
+                    // Si hay pedido activo y la ubicación no está activa, activarla automáticamente
+                    if (!isLocationActive) {
+                        console.log('🔄 Pedido activo detectado, activando ubicación automáticamente...');
+                        await startLocationTracking();
+                    }
                 } else {
                     activeOrder = null;
                     document.getElementById('active-order-container').classList.add('hidden');
@@ -987,8 +1217,12 @@
             document.getElementById('active-order-container').classList.remove('hidden');
             document.getElementById('available-orders-container').classList.add('hidden');
 
+            // Iniciar temporizador si el pedido está en camino
             if (order.estado === 'en_camino' && !timerInterval) {
-                startTimer();
+                // Recuperar tiempo de inicio desde la BD
+                const startTime = order.tiempo_inicio_entrega || Date.now();
+                console.log('⏱️ Recuperando temporizador desde:', new Date(startTime).toLocaleTimeString());
+                startTimer(startTime);
             }
 
             const card = `
@@ -1083,7 +1317,12 @@
                             <div class="order-detail-value">${order.metodo_pago === 'efectivo' ? 'Efectivo' : 'Tarjeta'}</div>
                         </div>
                     </div>
-                    <button class="btn btn-primary" onclick="window.acceptOrder('${order.id}')">
+                    ${!isLocationActive ? `
+                        <div style="padding: 10px; background: rgba(231, 76, 60, 0.1); border-radius: 8px; margin-bottom: 10px; font-size: 13px; color: #e74c3c;">
+                            ⚠️ Activa tu ubicación arriba para aceptar pedidos
+                        </div>
+                    ` : ''}
+                    <button class="btn btn-primary" onclick="window.acceptOrder('${order.id}')" ${!isLocationActive ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
                         ✅ Aceptar Pedido
                     </button>
                 </div>
@@ -1119,6 +1358,14 @@
                 return;
             }
 
+            // CRÍTICO: Verificar que la ubicación esté activa
+            if (!isLocationActive) {
+                showAlert('❌ Debes activar tu ubicación antes de aceptar pedidos. Toca el botón "Activar Ubicación" arriba.', 'danger');
+                // Hacer scroll al control de ubicación
+                document.getElementById('location-control').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
             // Deshabilitar botón temporalmente para evitar múltiples clicks
             const buttons = document.querySelectorAll('button');
             buttons.forEach(btn => btn.disabled = true);
@@ -1126,15 +1373,7 @@
             try {
                 console.log('🔍 Iniciando proceso de aceptación de pedido...');
                 
-                // Verificar que el seguimiento de ubicación esté activo
-                const locationEnabled = await startLocationTracking();
-                console.log('🔍 locationEnabled:', locationEnabled);
-                
-                if (!locationEnabled) {
-                    throw new Error('No se pudo activar el seguimiento de ubicación. Debes permitir el acceso a tu ubicación para aceptar pedidos.');
-                }
-
-                // Verificar que efectivamente tenemos una ubicación guardada
+                // Verificar que efectivamente tenemos una ubicación guardada y reciente
                 const { data: deliveryData } = await supabase
                     .from('domiciliarios')
                     .select('ubicacion')
@@ -1147,9 +1386,13 @@
                     throw new Error('No se pudo verificar tu ubicación. Intenta nuevamente.');
                 }
 
-                // NUEVA VALIDACIÓN: Verificar que la ubicación sea reciente (menos de 1 minuto)
-                if (!isLocationRecent(deliveryData.ubicacion, 1)) {
-                    throw new Error('Tu ubicación no está actualizada. Por favor, espera un momento e intenta de nuevo. (Edad máxima: 1 minuto)');
+                // Verificar que la ubicación sea reciente (menos de 2 minutos)
+                const locationTimestamp = new Date(deliveryData.ubicacion.timestamp);
+                const now = new Date();
+                const diffMinutes = (now - locationTimestamp) / 1000 / 60;
+                
+                if (diffMinutes > 2) {
+                    throw new Error('Tu ubicación no está actualizada. Por favor, espera un momento e intenta de nuevo.');
                 }
 
                 console.log('✅ Ubicación verificada y actual:', deliveryData.ubicacion);
@@ -1181,8 +1424,10 @@
                 console.error('❌ Error al aceptar el pedido:', error);
                 showAlert('❌ Error: ' + error.message, 'danger');
                 
-                // Si falló, detener el seguimiento de ubicación
-                stopLocationTracking();
+                // Si falló, verificar que la ubicación siga activa
+                if (!isLocationActive) {
+                    stopLocationTracking();
+                }
             } finally {
                 // Rehabilitar botones
                 buttons.forEach(btn => btn.disabled = false);
@@ -1191,17 +1436,20 @@
 
         window.startDelivery = async function(orderId) {
             try {
+                const startTime = Date.now();
+                
                 const { error } = await supabase
                     .from('pedidos')
                     .update({
                         estado: 'en_camino',
+                        tiempo_inicio_entrega: startTime, // Guardar tiempo de inicio
                         updated_at: new Date().toISOString()
                     })
                     .eq('id', orderId);
 
                 if (error) throw error;
 
-                startTimer();
+                startTimer(startTime);
                 showAlert('¡Entrega iniciada! El temporizador está corriendo.', 'success');
                 await loadOrders();
             } catch (error) {
