@@ -81,6 +81,16 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
+        .form-group input.error {
+            border-color: #e74c3c;
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
         .btn {
             width: 100%;
             padding: 15px;
@@ -100,6 +110,11 @@
 
         .btn-primary:active {
             transform: scale(0.98);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .btn-success {
@@ -397,6 +412,30 @@
             color: #7f8c8d;
             font-size: 12px;
         }
+
+        .login-help {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 13px;
+            color: #495057;
+        }
+
+        .login-help strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .login-help ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .login-help li {
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
@@ -414,9 +453,20 @@
                     <div class="form-group">
                         <label>Número de Teléfono</label>
                         <input type="tel" id="login-phone" required placeholder="+573001234567" value="+57">
+                        <div class="form-hint">Formato: +57 seguido de 10 dígitos (Ej: +573001234567)</div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+                    <button type="submit" class="btn btn-primary" id="login-btn">Iniciar Sesión</button>
                 </form>
+
+                <div class="login-help">
+                    <strong>💡 ¿No puedes ingresar?</strong>
+                    <ul>
+                        <li>Asegúrate de usar el número registrado exactamente como fue creado</li>
+                        <li>Debe incluir +57 seguido de 10 dígitos</li>
+                        <li>No uses espacios ni guiones</li>
+                        <li>Ejemplo correcto: +573001234567</li>
+                    </ul>
+                </div>
             </div>
         </div>
 
@@ -495,6 +545,29 @@
             const alertClass = `alert-${type}`;
             container.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
             setTimeout(() => container.innerHTML = '', 5000);
+        }
+
+        function validatePhone(phone) {
+            // Eliminar espacios en blanco
+            phone = phone.trim();
+            
+            // Verificar que empiece con +57
+            if (!phone.startsWith('+57')) {
+                return { valid: false, error: 'El número debe comenzar con +57' };
+            }
+            
+            // Verificar que tenga exactamente 13 caracteres (+57 + 10 dígitos)
+            if (phone.length !== 13) {
+                return { valid: false, error: 'El número debe tener 10 dígitos después de +57' };
+            }
+            
+            // Verificar que todos los caracteres después de +57 sean dígitos
+            const digits = phone.substring(3);
+            if (!/^\d{10}$/.test(digits)) {
+                return { valid: false, error: 'El número debe contener solo dígitos después de +57' };
+            }
+            
+            return { valid: true, phone: phone };
         }
 
         function playNotificationSound() {
@@ -626,8 +699,6 @@
             });
         }
 
-        let locationUpdateInterval = null;
-
         async function updateLocation() {
             if (!navigator.geolocation || !currentDelivery) return;
 
@@ -665,13 +736,10 @@
             try {
                 await requestLocationPermission();
                 
-                // Actualizar ubicación inmediatamente
                 await updateLocation();
 
-                // Actualizar ubicación cada 1 minuto (60000 ms)
                 locationUpdateInterval = setInterval(updateLocation, 60000);
 
-                // También mantener watchPosition para actualizaciones en movimiento
                 locationWatchId = navigator.geolocation.watchPosition(
                     async (position) => {
                         const locationData = {
@@ -718,15 +786,42 @@
         }
 
         async function login(phone) {
+            const loginBtn = document.getElementById('login-btn');
+            const phoneInput = document.getElementById('login-phone');
+            
             try {
+                loginBtn.disabled = true;
+                loginBtn.textContent = 'Verificando...';
+                
+                // Validar formato de teléfono
+                const validation = validatePhone(phone);
+                if (!validation.valid) {
+                    phoneInput.classList.add('error');
+                    throw new Error(validation.error);
+                }
+                
+                phoneInput.classList.remove('error');
+                const cleanPhone = validation.phone;
+                
+                console.log('Intentando login con teléfono:', cleanPhone);
+                
+                // Buscar domiciliario
                 const { data, error } = await supabase
                     .from('domiciliarios')
                     .select('*')
-                    .eq('telefono', phone)
-                    .single();
+                    .eq('telefono', cleanPhone)
+                    .maybeSingle();
 
-                if (error || !data) {
-                    throw new Error('Número de teléfono no encontrado');
+                console.log('Resultado de búsqueda:', { data, error });
+
+                if (error) {
+                    console.error('Error de Supabase:', error);
+                    throw new Error('Error al conectar con el servidor: ' + error.message);
+                }
+
+                if (!data) {
+                    phoneInput.classList.add('error');
+                    throw new Error(`❌ Número ${cleanPhone} no registrado en el sistema.\n\nVerifica que:\n• El número esté registrado\n• Incluya +57 seguido de 10 dígitos\n• No tenga espacios ni guiones`);
                 }
 
                 currentDelivery = data;
@@ -744,8 +839,15 @@
 
                 await loadOrders();
                 setInterval(loadOrders, 30000);
+                
+                showAlert(`✅ ¡Bienvenido ${data.nombre}!`, 'success');
+                
             } catch (error) {
+                console.error('Error en login:', error);
                 showAlert(error.message, 'danger');
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Iniciar Sesión';
             }
         }
 
@@ -1012,8 +1114,12 @@
 
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const phone = document.getElementById('login-phone').value.trim();
+            const phone = document.getElementById('login-phone').value;
             await login(phone);
+        });
+
+        document.getElementById('login-phone').addEventListener('input', function() {
+            this.classList.remove('error');
         });
 
         document.getElementById('logout-btn').addEventListener('click', () => {
