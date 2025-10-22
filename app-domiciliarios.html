@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluxi - Domiciliario</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .login-container {
+            padding: 30px 20px;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 60px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .status-bar {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-item {
+            text-align: center;
+        }
+
+        .status-item .label {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+
+        .status-item .value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .status-indicator.active {
+            background: #27ae60;
+            box-shadow: 0 0 10px #27ae60;
+        }
+
+        .status-indicator.inactive {
+            background: #e74c3c;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .order-card {
+            background: white;
+            border: 2px solid #ecf0f1;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .order-card.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .order-id {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .order-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .order-status.pendiente {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .order-status.asignado {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .order-status.en_camino {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .order-detail {
+            margin-bottom: 15px;
+        }
+
+        .order-detail-row {
+            display: flex;
+            padding: 10px 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+
+        .order-detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .order-detail-label {
+            font-size: 13px;
+            color: #7f8c8d;
+            width: 100px;
+            flex-shrink: 0;
+        }
+
+        .order-detail-value {
+            font-size: 14px;
+            color: #2c3e50;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .timer-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .timer-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .timer-value {
+            font-size: 48px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+
+        .empty-state-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .empty-state-subtext {
+            font-size: 14px;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .action-buttons.single {
+            grid-template-columns: 1fr;
+        }
+
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .alert {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .new-order-badge {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: #27ae60;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);
+            z-index: 1000;
+            animation: pulse 1s infinite;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Screen -->
+        <div id="login-screen">
+            <div class="header">
+                <h1>🚀 Fluxi</h1>
+                <div class="subtitle">App para Domiciliarios</div>
+            </div>
+            <div class="login-container">
+                <div class="logo">🏍️</div>
+                <div id="login-alert"></div>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label>Número de Teléfono</label>
+                        <input type="tel" id="login-phone" required placeholder="+573001234567" value="+57">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main App Screen -->
+        <div id="app-screen" class="hidden">
+            <div class="header">
+                <button class="logout-btn" id="logout-btn">Salir</button>
+                <h1>🏍️ <span id="delivery-name">Domiciliario</span></h1>
+                <div class="subtitle">
+                    <span class="status-indicator" id="location-indicator"></span>
+                    <span id="location-status">Ubicación desactivada</span>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="status-bar">
+                    <div class="status-item">
+                        <div class="label">Pedidos Hoy</div>
+                        <div class="value" id="orders-today">0</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="label">Completados</div>
+                        <div class="value" id="orders-completed">0</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="label">En Curso</div>
+                        <div class="value" id="orders-active">0</div>
+                    </div>
+                </div>
+
+                <div id="alert-container"></div>
+
+                <!-- Active Order Section -->
+                <div id="active-order-container" class="hidden">
+                    <h2 style="margin-bottom: 15px; color: #2c3e50;">📦 Pedido Activo</h2>
+                    
+                    <div class="timer-display">
+                        <div class="timer-label">⏱️ Tiempo Transcurrido</div>
+                        <div class="timer-value" id="timer-display">00:00:00</div>
+                    </div>
+
+                    <div id="active-order-card"></div>
+                </div>
+
+                <!-- Available Orders Section -->
+                <div id="available-orders-container">
+                    <h2 style="margin-bottom: 15px; color: #2c3e50;">📋 Pedidos Disponibles</h2>
+                    <div id="orders-list"></div>
+                </div>
+            </div>
+
+            <div class="footer">
+                Fluxi © 2025 - Sistema de Domicilios
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        const SUPABASE_URL = 'https://lbifbexhmvbanvrjfglp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxiaWZiZXhobXZiYW52cmpmZ2xwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5Mjg5MDQsImV4cCI6MjA3NjUwNDkwNH0.ZXjCv4DkNobkn3IDK9wYBjjOV55Bf_UwcSxhkt6YqGo';
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentDelivery = null;
+        let activeOrder = null;
+        let locationWatchId = null;
+        let timerInterval = null;
+        let timerStartTime = null;
+        let realtimeChannel = null;
+
+        function showAlert(message, type = 'info') {
+            const container = document.getElementById('alert-container') || document.getElementById('login-alert');
+            const alertClass = `alert-${type}`;
+            container.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
+            setTimeout(() => container.innerHTML = '', 5000);
+        }
+
+        function playNotificationSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            } catch (e) {
+                console.log('No se pudo reproducir sonido');
+            }
+        }
+
+        function showNewOrderNotification(order) {
+            showAlert(`🎉 ¡Nuevo pedido asignado! #${order.id.substring(0, 8)} - ${order.cliente}`, 'success');
+            
+            const badge = document.createElement('div');
+            badge.className = 'new-order-badge';
+            badge.textContent = '🆕 Nuevo Pedido';
+            document.body.appendChild(badge);
+            
+            setTimeout(() => badge.remove(), 5000);
+            
+            playNotificationSound();
+
+            if ('vibrate' in navigator) {
+                navigator.vibrate([200, 100, 200]);
+            }
+
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('Fluxi - Nuevo Pedido', {
+                    body: `Pedido de ${order.cliente}\nTotal: ${formatCurrency(order.valor_pedido + order.valor_domicilio)}`,
+                    icon: '🏍️',
+                    badge: '📦'
+                });
+            }
+        }
+
+        function setupRealtimeSubscription() {
+            if (realtimeChannel) {
+                supabase.removeChannel(realtimeChannel);
+            }
+
+            realtimeChannel = supabase
+                .channel('pedidos-changes')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'pedidos'
+                    },
+                    async (payload) => {
+                        console.log('Cambio detectado:', payload);
+                        
+                        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+                            const newOrder = payload.new;
+                            
+                            if (newOrder.domiciliario_id === currentDelivery.id && 
+                                newOrder.estado === 'asignado' &&
+                                (!activeOrder || activeOrder.id !== newOrder.id)) {
+                                showNewOrderNotification(newOrder);
+                            }
+                        }
+                        
+                        await loadOrders();
+                    }
+                )
+                .subscribe();
+        }
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('es-CO', { 
+                style: 'currency', 
+                currency: 'COP', 
+                minimumFractionDigits: 0 
+            }).format(value);
+        }
+
+        function formatTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        function startTimer() {
+            if (timerInterval) return;
+            
+            timerStartTime = Date.now();
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - timerStartTime) / 1000);
+                document.getElementById('timer-display').textContent = formatTime(elapsed);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            timerStartTime = null;
+            document.getElementById('timer-display').textContent = '00:00:00';
+        }
+
+        function requestLocationPermission() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error('Geolocalización no soportada'));
+                    return;
+                }
+
+                navigator.geolocation.getCurrentPosition(
+                    () => resolve(true),
+                    (error) => reject(error),
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            });
+        }
+
+        async function startLocationTracking() {
+            try {
+                await requestLocationPermission();
+                
+                locationWatchId = navigator.geolocation.watchPosition(
+                    async (position) => {
+                        const locationData = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                            timestamp: new Date().toISOString()
+                        };
+
+                        await supabase
+                            .from('domiciliarios')
+                            .update({ ubicacion: locationData })
+                            .eq('id', currentDelivery.id);
+
+                        document.getElementById('location-indicator').classList.add('active');
+                        document.getElementById('location-indicator').classList.remove('inactive');
+                        document.getElementById('location-status').textContent = 'Ubicación activa';
+                    },
+                    (error) => {
+                        console.error('Error de geolocalización:', error);
+                        showAlert('Error al obtener ubicación. Verifica los permisos.', 'danger');
+                    },
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                );
+
+                return true;
+            } catch (error) {
+                showAlert('Debes permitir el acceso a la ubicación para aceptar pedidos.', 'danger');
+                return false;
+            }
+        }
+
+        function stopLocationTracking() {
+            if (locationWatchId) {
+                navigator.geolocation.clearWatch(locationWatchId);
+                locationWatchId = null;
+            }
+            document.getElementById('location-indicator').classList.remove('active');
+            document.getElementById('location-indicator').classList.add('inactive');
+            document.getElementById('location-status').textContent = 'Ubicación desactivada';
+        }
+
+        async function login(phone) {
+            try {
+                const { data, error } = await supabase
+                    .from('domiciliarios')
+                    .select('*')
+                    .eq('telefono', phone)
+                    .single();
+
+                if (error || !data) {
+                    throw new Error('Número de teléfono no encontrado');
+                }
+
+                currentDelivery = data;
+                localStorage.setItem('fluxi_delivery', JSON.stringify(data));
+                
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+                document.getElementById('delivery-name').textContent = data.nombre;
+
+                if ('Notification' in window && Notification.permission === 'default') {
+                    Notification.requestPermission();
+                }
+
+                setupRealtimeSubscription();
+
+                await loadOrders();
+                setInterval(loadOrders, 30000);
+            } catch (error) {
+                showAlert(error.message, 'danger');
+            }
+        }
+
+        async function loadOrders() {
+            if (!currentDelivery) return;
+
+            try {
+                const { data: activeOrders } = await supabase
+                    .from('pedidos')
+                    .select('*')
+                    .eq('domiciliario_id', currentDelivery.id)
+                    .in('estado', ['asignado', 'en_camino'])
+                    .order('created_at', { ascending: false });
+
+                if (activeOrders && activeOrders.length > 0) {
+                    activeOrder = activeOrders[0];
+                    renderActiveOrder(activeOrder);
+                } else {
+                    activeOrder = null;
+                    document.getElementById('active-order-container').classList.add('hidden');
+                    stopTimer();
+                    
+                    await supabase
+                        .from('domiciliarios')
+                        .update({ estado: 'disponible' })
+                        .eq('id', currentDelivery.id);
+                }
+
+                const { data: availableOrders } = await supabase
+                    .from('pedidos')
+                    .select('*')
+                    .eq('estado', 'pendiente')
+                    .is('domiciliario_id', null)
+                    .order('created_at', { ascending: false });
+
+                renderAvailableOrders(availableOrders || []);
+
+                await updateStats();
+            } catch (error) {
+                console.error('Error cargando pedidos:', error);
+            }
+        }
+
+        function renderActiveOrder(order) {
+            document.getElementById('active-order-container').classList.remove('hidden');
+            document.getElementById('available-orders-container').classList.add('hidden');
+
+            if (order.estado === 'en_camino' && !timerInterval) {
+                startTimer();
+            }
+
+            const card = `
+                <div class="order-card active">
+                    <div class="order-header">
+                        <div class="order-id">#${order.id.substring(0, 8)}</div>
+                        <span class="order-status ${order.estado}">${order.estado === 'asignado' ? 'Asignado' : 'En Camino'}</span>
+                    </div>
+                    <div class="order-detail">
+                        <div class="order-detail-row">
+                            <div class="order-detail-label">👤 Cliente:</div>
+                            <div class="order-detail-value">${order.cliente}</div>
+                        </div>
+                        <div class="order-detail-row">
+                            <div class="order-detail-label">📞 Teléfono:</div>
+                            <div class="order-detail-value">${order.telefono_cliente}</div>
+                        </div>
+                        <div class="order-detail-row">
+                            <div class="order-detail-label">📍 Dirección:</div>
+                            <div class="order-detail-value">${order.direccion}</div>
+                        </div>
+                        <div class="order-detail-row">
+                            <div class="order-detail-label">💰 Total:</div>
+                            <div class="order-detail-value">${formatCurrency(order.valor_pedido + order.valor_domicilio)}</div>
+                        </div>
+                        <div class="order-detail-row">
+                            <div class="order-detail-label">💳 Pago:</div>
+                            <div class="order-detail-value">${order.metodo_pago === 'efectivo' ? 'Efectivo' : 'Tarjeta'}</div>
+                        </div>
+                        ${order.notas ? `
+                        <div class="order-detail-row">
+                            <div class="order-detail-label">📝 Notas:</div>
+                            <div class="order-detail-value">${order.notas}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="action-buttons ${order.estado === 'asignado' ? '' : 'single'}">
+                        ${order.estado === 'asignado' ? `
+                            <button class="btn btn-success" onclick="window.startDelivery('${order.id}')">
+                                🚀 Iniciar Entrega
+                            </button>
+                        ` : ''}
+                        <button class="btn btn-primary" onclick="window.completeDelivery('${order.id}')">
+                            ✅ Marcar Entregado
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('active-order-card').innerHTML = card;
+        }
+
+        function renderAvailableOrders(orders) {
+            const container = document.getElementById('orders-list');
+            
+            if (!activeOrder) {
+                document.getElementById('available-orders-container').classList.remove('hidden');
+            }
+
+            if (orders.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📦</div>
+                        <div class="empty-state-text">No hay pedidos disponibles</div>
+                        <div class="empty-state-subtext">Los nuevos pedidos aparecerán aquí automáticamente</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = orders.map(order => `
+                <div class="order-card">
+                    <div class="order-header">
+                        <div class="order-id">#${order.id.substring(0, 8)}</div>
+                        <span class="order-status pendiente">Disponible</span>
+                    </div>
+                    <div class="order-detail">
+                        <div class="order-detail-row">
+                            <div class="order-detail-label">👤 Cliente:</div>
+                            <div class="order-detail-value">${order.cliente}</div>
+                        </div>
+                        <div class="order-detail-row">
+                            <div class="order-detail-label">📍 Dirección:</div>
+                            <div class="order-detail-value">${order.direccion}</div>
+                        </div>
+                        <div class="order-detail-row">
+                            <div class="order-detail-label">💰 Total:</div>
+                            <div class="order-detail-value">${formatCurrency(order.valor_pedido + order.valor_domicilio)}</div>
+                        </div>
+                        <div class="order-detail-row">
+                            <div class="order-detail-label">💳 Pago:</div>
+                            <div class="order-detail-value">${order.metodo_pago === 'efectivo' ? 'Efectivo' : 'Tarjeta'}</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="window.acceptOrder('${order.id}')">
+                        ✅ Aceptar Pedido
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        async function updateStats() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const { data: allOrders } = await supabase
+                .from('pedidos')
+                .select('*')
+                .eq('domiciliario_id', currentDelivery.id);
+
+            const todayOrders = (allOrders || []).filter(o => 
+                new Date(o.created_at) >= today
+            );
+
+            const completed = (allOrders || []).filter(o => o.estado === 'entregado').length;
+            const active = (allOrders || []).filter(o => 
+                o.estado === 'asignado' || o.estado === 'en_camino'
+            ).length;
+
+            document.getElementById('orders-today').textContent = todayOrders.length;
+            document.getElementById('orders-completed').textContent = completed;
+            document.getElementById('orders-active').textContent = active;
+        }
+
+        window.acceptOrder = async function(orderId) {
+            if (activeOrder) {
+                showAlert('Ya tienes un pedido activo. Complétalo antes de aceptar otro.', 'warning');
+                return;
+            }
+
+            const locationEnabled = await startLocationTracking();
+            if (!locationEnabled) {
+                return;
+            }
+
+            try {
+                const { error } = await supabase
+                    .from('pedidos')
+                    .update({
+                        estado: 'asignado',
+                        domiciliario_id: currentDelivery.id,
+                        domiciliario_nombre: currentDelivery.nombre,
+                        domiciliario_telefono: currentDelivery.telefono,
+                        tiempo_aceptacion: Date.now(),
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', orderId);
+
+                if (error) throw error;
+
+                await supabase
+                    .from('domiciliarios')
+                    .update({ estado: 'ocupado' })
+                    .eq('id', currentDelivery.id);
+
+                showAlert('¡Pedido aceptado! Recuerda iniciar la entrega cuando salgas.', 'success');
+                await loadOrders();
+            } catch (error) {
+                showAlert('Error al aceptar el pedido: ' + error.message, 'danger');
+            }
+        };
+
+        window.startDelivery = async function(orderId) {
+            try {
+                const { error } = await supabase
+                    .from('pedidos')
+                    .update({
+                        estado: 'en_camino',
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', orderId);
+
+                if (error) throw error;
+
+                startTimer();
+                showAlert('¡Entrega iniciada! El temporizador está corriendo.', 'success');
+                await loadOrders();
+            } catch (error) {
+                showAlert('Error al iniciar entrega: ' + error.message, 'danger');
+            }
+        };
+
+        window.completeDelivery = async function(orderId) {
+            if (!confirm('¿Confirmas que el pedido fue entregado?')) return;
+
+            try {
+                const { error } = await supabase
+                    .from('pedidos')
+                    .update({
+                        estado: 'entregado',
+                        tiempo_entrega: Date.now(),
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', orderId);
+
+                if (error) throw error;
+
+                await supabase
+                    .from('domiciliarios')
+                    .update({ 
+                        estado: 'disponible',
+                        pedidos_completados: currentDelivery.pedidos_completados + 1
+                    })
+                    .eq('id', currentDelivery.id);
+
+                stopTimer();
+                stopLocationTracking();
+                
+                showAlert('¡Pedido completado exitosamente! 🎉', 'success');
+                await loadOrders();
+            } catch (error) {
+                showAlert('Error al completar pedido: ' + error.message, 'danger');
+            }
+        };
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const phone = document.getElementById('login-phone').value.trim();
+            await login(phone);
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            if (confirm('¿Seguro que deseas cerrar sesión?')) {
+                localStorage.removeItem('fluxi_delivery');
+                stopLocationTracking();
+                stopTimer();
+                if (realtimeChannel) {
+                    supabase.removeChannel(realtimeChannel);
+                }
+                location.reload();
+            }
+        });
+
+        window.addEventListener('load', async () => {
+            const saved = localStorage.getItem('fluxi_delivery');
+            if (saved) {
+                currentDelivery = JSON.parse(saved);
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+                document.getElementById('delivery-name').textContent = currentDelivery.nombre;
+                
+                if ('Notification' in window && Notification.permission === 'default') {
+                    Notification.requestPermission();
+                }
+                
+                setupRealtimeSubscription();
+                
+                await loadOrders();
+                setInterval(loadOrders, 30000);
+            }
+        });
+    </script>
+</body>
+</html>
