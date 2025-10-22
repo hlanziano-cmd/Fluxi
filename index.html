@@ -1366,6 +1366,13 @@
 
         function openTracking(order) {
             currentTrackingOrder = order; // Guardar el pedido actual
+            window.currentTrackingOrder = order; // Exponer globalmente para depuración
+            
+            console.log('📍 Abriendo tracking para pedido:', order.id.substring(0, 8));
+            console.log('   - Cliente:', order.cliente);
+            console.log('   - Domiciliario:', order.domiciliario_nombre || 'Sin asignar');
+            console.log('   - Domiciliario ID:', order.domiciliario_id?.substring(0, 8) || 'N/A');
+            
             document.getElementById('tracking-modal').classList.add('active');
             document.getElementById('tracking-info').innerHTML = `
                 <div><strong>Pedido ID:</strong> #${order.id.substring(0, 8)}</div>
@@ -1383,6 +1390,7 @@
             }
             
             if (order.domiciliario_id) {
+                console.log('🔄 Iniciando actualización automática...');
                 updateTrackingInfo(); // Primera actualización inmediata
                 
                 // Actualizar ubicación cada 30 segundos (más frecuente)
@@ -1391,14 +1399,23 @@
                 }, 30000);
             } else {
                 // Si no hay domiciliario asignado
+                console.warn('⚠️ Pedido sin domiciliario asignado');
                 document.getElementById('tracking-status').innerHTML = '<span class="status-badge status-pendiente">Sin asignar</span>';
                 document.getElementById('tracking-time').textContent = '--';
                 document.getElementById('tracking-update-time').textContent = new Date().toLocaleTimeString('es-CO');
             }
         }
+        
+        // Exponer globalmente
+        window.openTracking = openTracking;
 
         async function updateTrackingInfo() {
-            if (!currentTrackingOrder) return;
+            if (!currentTrackingOrder) {
+                console.warn('⚠️ No hay pedido en seguimiento');
+                return;
+            }
+            
+            console.log('🔄 Actualizando información del tracking...');
             
             try {
                 // 1. Obtener información actualizada del pedido
@@ -1417,6 +1434,7 @@
                     if (statusBadge) {
                         statusBadge.className = 'status-badge status-' + orderData.estado;
                         statusBadge.textContent = orderData.estado.charAt(0).toUpperCase() + orderData.estado.slice(1);
+                        console.log('✅ Estado actualizado:', orderData.estado);
                     }
                     
                     // 3. Actualizar el TIEMPO TRANSCURRIDO
@@ -1424,6 +1442,7 @@
                     if (timeSpan) {
                         if (orderData.tiempo_aceptacion) {
                             timeSpan.textContent = calculateElapsedTime(orderData.tiempo_aceptacion);
+                            console.log('✅ Tiempo actualizado');
                         } else {
                             timeSpan.textContent = '--';
                         }
@@ -1432,16 +1451,29 @@
                 
                 // 4. Actualizar la UBICACIÓN GPS si hay domiciliario
                 if (currentTrackingOrder.domiciliario_id) {
+                    console.log('📍 Actualizando ubicación GPS...');
                     await loadDeliveryLocation(currentTrackingOrder.domiciliario_id);
+                    console.log('✅ Ubicación actualizada');
+                } else {
+                    console.warn('⚠️ No hay domiciliario asignado');
                 }
                 
                 // 5. Actualizar hora de última actualización
-                document.getElementById('tracking-update-time').textContent = new Date().toLocaleTimeString('es-CO');
+                const updateTimeEl = document.getElementById('tracking-update-time');
+                if (updateTimeEl) {
+                    updateTimeEl.textContent = new Date().toLocaleTimeString('es-CO');
+                }
+                
+                console.log('✅ Actualización completada');
                 
             } catch (error) {
-                console.error('Error al actualizar tracking:', error);
+                console.error('❌ Error al actualizar tracking:', error);
+                alert('Error al actualizar. Revisa la consola (F12) para más detalles.');
             }
         }
+        
+        // Exponer función globalmente para el event listener
+        window.updateTrackingInfo = updateTrackingInfo;
 
         async function loadDeliveryLocation(deliveryId) {
             try {
@@ -1500,15 +1532,18 @@
         }
 
         function closeTrackingModal() {
+            console.log('❌ Cerrando modal de tracking');
             document.getElementById('tracking-modal').classList.remove('active');
             if (trackingMarker && trackingMap) trackingMap.removeLayer(trackingMarker);
             trackingMarker = null;
             currentTrackingOrder = null; // Limpiar el pedido actual
+            window.currentTrackingOrder = null; // Limpiar también en window
             
             // Detener actualización automática
             if (trackingUpdateInterval) {
                 clearInterval(trackingUpdateInterval);
                 trackingUpdateInterval = null;
+                console.log('⏹ Intervalo de actualización detenido');
             }
         }
 
@@ -1574,7 +1609,15 @@
         document.getElementById('btn-cancel-order').addEventListener('click', closeOrderModal);
         document.getElementById('btn-refresh-orders').addEventListener('click', loadOrders);
         document.getElementById('btn-close-tracking').addEventListener('click', closeTrackingModal);
-        document.getElementById('btn-refresh-tracking').addEventListener('click', updateTrackingInfo);
+        document.getElementById('btn-refresh-tracking').addEventListener('click', () => {
+            console.log('🔄 Botón de actualización clickeado');
+            if (typeof window.updateTrackingInfo === 'function') {
+                window.updateTrackingInfo();
+            } else {
+                console.error('❌ window.updateTrackingInfo no está disponible');
+                alert('Error: La función de actualización no está disponible');
+            }
+        });
         document.getElementById('filter-status').addEventListener('change', filterOrders);
         document.getElementById('order-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeOrderModal(); });
         document.getElementById('tracking-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeTrackingModal(); });
