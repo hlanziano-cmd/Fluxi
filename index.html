@@ -1810,26 +1810,45 @@
                 const select = document.getElementById('order-delivery-person');
                 select.innerHTML = '<option value="">Sin asignar</option>';
                 
-                // Solo agregar opción de Rappi si el tipo es "rappi" o no se ha seleccionado tipo aún
-                if (deliveryType !== 'propio') {
+                if (deliveryType === 'rappi') {
+                    // Si el tipo es Rappi, SOLO mostrar la opción Rappi
                     const rappiOption = document.createElement('option');
                     rappiOption.value = 'rappi';
                     rappiOption.dataset.name = 'Rappi';
                     rappiOption.dataset.phone = '';
                     rappiOption.textContent = 'Rappi';
                     select.appendChild(rappiOption);
-                }
-                
-                // Siempre agregar domiciliarios propios
-                if (result.data) {
-                    result.data.forEach(d => {
-                        const option = document.createElement('option');
-                        option.value = d.id;
-                        option.dataset.name = d.nombre;
-                        option.dataset.phone = d.telefono;
-                        option.textContent = `${d.nombre} - ${d.estado === 'disponible' ? 'Disponible' : 'Ocupado'}`;
-                        select.appendChild(option);
-                    });
+                } else if (deliveryType === 'propio') {
+                    // Si el tipo es Propio, SOLO mostrar domiciliarios propios (sin Rappi)
+                    if (result.data) {
+                        result.data.forEach(d => {
+                            const option = document.createElement('option');
+                            option.value = d.id;
+                            option.dataset.name = d.nombre;
+                            option.dataset.phone = d.telefono;
+                            option.textContent = `${d.nombre} - ${d.estado === 'disponible' ? 'Disponible' : 'Ocupado'}`;
+                            select.appendChild(option);
+                        });
+                    }
+                } else {
+                    // Si no hay tipo seleccionado, mostrar todo (Rappi + domiciliarios propios)
+                    const rappiOption = document.createElement('option');
+                    rappiOption.value = 'rappi';
+                    rappiOption.dataset.name = 'Rappi';
+                    rappiOption.dataset.phone = '';
+                    rappiOption.textContent = 'Rappi';
+                    select.appendChild(rappiOption);
+                    
+                    if (result.data) {
+                        result.data.forEach(d => {
+                            const option = document.createElement('option');
+                            option.value = d.id;
+                            option.dataset.name = d.nombre;
+                            option.dataset.phone = d.telefono;
+                            option.textContent = `${d.nombre} - ${d.estado === 'disponible' ? 'Disponible' : 'Ocupado'}`;
+                            select.appendChild(option);
+                        });
+                    }
                 }
             } catch (error) {
                 console.error('Error:', error);
