@@ -1076,18 +1076,35 @@
                 stopLocationTracking();
                 
                 // Mostrar mensaje específico según el error
-                let errorMessage = 'No se pudo activar la ubicación. ';
-                if (error.message.includes('denegados') || error.message.includes('denied')) {
-                    errorMessage = '❌ Permisos de ubicación denegados. Debes permitir el acceso a la ubicación para aceptar pedidos.';
-                } else if (error.message.includes('no disponible') || error.message.includes('unavailable')) {
-                    errorMessage = '❌ Ubicación no disponible. Verifica que el GPS esté activado.';
-                } else if (error.message.includes('Tiempo de espera') || error.message.includes('timeout')) {
-                    errorMessage = '❌ No se pudo obtener tu ubicación. Verifica tu conexión y que el GPS esté activado.';
+                let errorMessage = '';
+                if (error.code === 1 || error.message.includes('denegados') || error.message.includes('denied')) {
+                    errorMessage = '❌ PERMISOS DENEGADOS\n\n' +
+                                  '📱 Para activar permisos de ubicación:\n\n' +
+                                  '1. Haz clic en el ícono 🔒 o ⓘ en la barra de direcciones\n' +
+                                  '2. Busca "Ubicación" o "Location"\n' +
+                                  '3. Selecciona "Permitir"\n' +
+                                  '4. Recarga la página\n\n' +
+                                  'IMPORTANTE: Sin ubicación activa no puedes aceptar pedidos.';
+                } else if (error.code === 2 || error.message.includes('no disponible') || error.message.includes('unavailable')) {
+                    errorMessage = '❌ GPS NO DISPONIBLE\n\n' +
+                                  '📡 Verifica que:\n' +
+                                  '1. El GPS esté activado en tu dispositivo\n' +
+                                  '2. Estés al aire libre o cerca de una ventana\n' +
+                                  '3. No estés en modo avión\n\n' +
+                                  'Intenta nuevamente cuando el GPS esté disponible.';
+                } else if (error.code === 3 || error.message.includes('Tiempo de espera') || error.message.includes('timeout')) {
+                    errorMessage = '❌ TIEMPO DE ESPERA AGOTADO\n\n' +
+                                  '⏱️ La ubicación tardó demasiado en obtenerse.\n\n' +
+                                  'Esto puede ser por:\n' +
+                                  '• Mala señal GPS\n' +
+                                  '• Estás en un lugar cerrado\n' +
+                                  '• Conexión lenta\n\n' +
+                                  'Ve a un lugar con mejor señal e intenta de nuevo.';
                 } else {
-                    errorMessage += error.message;
+                    errorMessage = '❌ ERROR AL ACTIVAR UBICACIÓN\n\n' + error.message + '\n\nIntenta recargar la página.';
                 }
                 
-                showAlert(errorMessage, 'danger');
+                alert(errorMessage);
                 isLocationActive = false;
                 updateLocationUI(false);
                 return false;
@@ -1277,7 +1294,7 @@
             // Iniciar temporizador si el pedido está en camino
             if (order.estado === 'en_camino' && !timerInterval) {
                 // Recuperar tiempo de inicio desde la BD
-                const startTime = order.tiempo_inicio_entrega || Date.now();
+                const startTime = order.tiempo_aceptacion || Date.now();
                 console.log('⏱️ Recuperando temporizador desde:', new Date(startTime).toLocaleTimeString());
                 startTimer(startTime);
             }
@@ -1526,7 +1543,6 @@
                 
                 const updateData = {
                     estado: 'en_camino',
-                    tiempo_inicio_entrega: startTime,
                     updated_at: new Date().toISOString()
                 };
                 
