@@ -822,10 +822,23 @@
                     </select>
                 </div>
                 <div class="form-group">
+                    <label>Tipo de Domiciliario *</label>
+                    <select id="order-delivery-type" required>
+                        <option value="">Seleccionar...</option>
+                        <option value="propio">Domiciliario Propio</option>
+                        <option value="rappi">Rappi</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>Asignar Domiciliario</label>
                     <select id="order-delivery-person">
                         <option value="">Sin asignar</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label>Número de Datafono</label>
+                    <input type="number" id="order-dataphone-number" placeholder="Ej: 12345" min="0">
+                    <small style="color: #7f8c8d; font-size: 12px;">Número del datafono asignado al domiciliario</small>
                 </div>
                 <div class="form-group">
                     <label>Notas Adicionales</label>
@@ -975,6 +988,9 @@
                 this.classList.add('active');
                 const moduleName = this.dataset.module;
                 document.getElementById('module-' + moduleName).classList.add('active');
+                
+                // Guardar módulo activo en localStorage
+                localStorage.setItem('fluxi_active_module', moduleName);
                 
                 if (moduleName === 'domiciliarios') {
                     setTimeout(() => { 
@@ -1236,14 +1252,14 @@
                     showAlert('delivery-alert', 'success', 'Domiciliario actualizado');
                 } else {
                     deliveryData.created_at = new Date().toISOString();
-                    deliveryData.pedidos_completados = 0;
                     await supabase.from('domiciliarios').insert([deliveryData]);
                     showAlert('delivery-alert', 'success', 'Domiciliario creado');
                 }
                 closeDeliveryModal();
                 loadDeliveries();
             } catch (error) {
-                showAlert('delivery-alert', 'error', 'Error');
+                console.error('Error al guardar domiciliario:', error);
+                showAlert('delivery-alert', 'error', 'Error: ' + error.message);
             }
         });
 
@@ -1388,9 +1404,15 @@
             setTimeout(() => {
                 initializeTrackingMap();
                 
+                // Mostrar información inicial sin cargar ubicación GPS
+                // La ubicación GPS solo se cargará cuando el usuario presione el botón "Actualizar"
                 if (order.domiciliario_id) {
-                    console.log('🔄 Cargando ubicación inicial...');
-                    updateTrackingInfo(); // Primera actualización inmediata
+                    console.log('ℹ️ Modal abierto. Usa el botón "Actualizar" para cargar la ubicación.');
+                    // Mostrar estado inicial
+                    document.getElementById('tracking-status').className = 'status-badge status-' + order.estado;
+                    document.getElementById('tracking-status').textContent = order.estado.charAt(0).toUpperCase() + order.estado.slice(1);
+                    document.getElementById('tracking-time').textContent = order.tiempo_aceptacion ? calculateElapsedTime(order.tiempo_aceptacion) : '--';
+                    document.getElementById('tracking-update-time').textContent = 'Presiona "Actualizar" para cargar ubicación';
                 } else {
                     // Si no hay domiciliario asignado
                     console.warn('⚠️ Pedido sin domiciliario asignado');
@@ -1756,6 +1778,8 @@
                 document.getElementById('order-value').value = formatNumberWithDots(order.valor_pedido);
                 document.getElementById('order-delivery-fee').value = formatNumberWithDots(order.valor_domicilio);
                 document.getElementById('order-payment-method').value = order.metodo_pago;
+                document.getElementById('order-delivery-type').value = order.tipo_domiciliario || '';
+                document.getElementById('order-dataphone-number').value = order.numero_datafono || '';
                 document.getElementById('order-delivery-person').value = order.domiciliario_id || '';
                 document.getElementById('order-notes').value = order.notas || '';
                 calculateTotal();
@@ -1819,6 +1843,8 @@
                 valor_pedido: parseFormattedNumber(document.getElementById('order-value').value),
                 valor_domicilio: parseFormattedNumber(document.getElementById('order-delivery-fee').value),
                 metodo_pago: document.getElementById('order-payment-method').value,
+                tipo_domiciliario: document.getElementById('order-delivery-type').value,
+                numero_datafono: document.getElementById('order-dataphone-number').value || null,
                 domiciliario_id: select.value || null,
                 domiciliario_nombre: option.dataset.name || null,
                 domiciliario_telefono: option.dataset.phone || null,
@@ -2001,6 +2027,29 @@
         }
 
         loadUsers();
+        
+        // Restaurar el módulo activo al recargar la página
+        function restoreActiveModule() {
+            const savedModule = localStorage.getItem('fluxi_active_module');
+            if (savedModule) {
+                // Encontrar el elemento del menú correspondiente
+                const menuItem = document.querySelector(`.menu-item[data-module="${savedModule}"]`);
+                if (menuItem) {
+                    // Simular clic en el elemento del menú
+                    menuItem.click();
+                    console.log(`✅ Módulo "${savedModule}" restaurado`);
+                } else {
+                    // Si no se encuentra el módulo guardado, cargar el dashboard por defecto
+                    document.querySelector('.menu-item[data-module="dashboard"]').click();
+                }
+            } else {
+                // Si no hay módulo guardado, cargar el dashboard por defecto
+                document.querySelector('.menu-item[data-module="dashboard"]').click();
+            }
+        }
+        
+        // Ejecutar restauración después de que todo esté cargado
+        setTimeout(restoreActiveModule, 100);
     </script>
 </body>
 </html>
