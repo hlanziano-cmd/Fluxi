@@ -1380,7 +1380,7 @@
                 <div><strong>Dirección:</strong> ${order.direccion}</div>
                 <div><strong>Domiciliario:</strong> ${order.domiciliario_nombre || 'Sin asignar'}</div>
                 <div style="margin-top: 10px; padding: 10px; background: #e3f2fd; border-radius: 5px; font-size: 12px;">
-                    📍 Actualización automática cada 30 segundos. Usa el botón "🔄 Actualizar" para actualizar manualmente.
+                    📍 Usa el botón "🔄 Actualizar" para actualizar la ubicación del domiciliario.
                 </div>
             `;
             
@@ -1389,13 +1389,8 @@
                 initializeTrackingMap();
                 
                 if (order.domiciliario_id) {
-                    console.log('🔄 Iniciando actualización automática...');
+                    console.log('🔄 Cargando ubicación inicial...');
                     updateTrackingInfo(); // Primera actualización inmediata
-                    
-                    // Actualizar ubicación cada 30 segundos (más frecuente)
-                    trackingUpdateInterval = setInterval(() => {
-                        updateTrackingInfo();
-                    }, 30000);
                 } else {
                     // Si no hay domiciliario asignado
                     console.warn('⚠️ Pedido sin domiciliario asignado');
@@ -1660,13 +1655,6 @@
             // Limpiar pedido actual
             currentTrackingOrder = null;
             window.currentTrackingOrder = null;
-            
-            // Detener actualización automática
-            if (trackingUpdateInterval) {
-                clearInterval(trackingUpdateInterval);
-                trackingUpdateInterval = null;
-                console.log('   - Intervalo de actualización detenido');
-            }
             
             // NO destruir el mapa, solo dejarlo para reutilizar
             // trackingMap se reutilizará en la próxima apertura
