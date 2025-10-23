@@ -1428,7 +1428,7 @@
             buttons.forEach(btn => btn.disabled = true);
 
             try {
-                console.log('🔍 Iniciando proceso de aceptación de pedido...');
+                console.log('🔍 Iniciando proceso de aceptación de pedido:', orderId);
                 
                 // Verificar que efectivamente tenemos una ubicación guardada y reciente
                 const { data: deliveryData } = await supabase
@@ -1455,27 +1455,46 @@
                 console.log('✅ Ubicación verificada y actual:', deliveryData.ubicacion);
 
                 // Aceptar el pedido
-                const { error } = await supabase
+                const updateData = {
+                    estado: 'asignado',
+                    domiciliario_id: currentDelivery.id,
+                    domiciliario_nombre: currentDelivery.nombre,
+                    domiciliario_telefono: currentDelivery.telefono,
+                    tiempo_aceptacion: Date.now(),
+                    updated_at: new Date().toISOString()
+                };
+                
+                console.log('📝 Actualizando pedido con datos:', updateData);
+                
+                const { data: updatedOrder, error } = await supabase
                     .from('pedidos')
-                    .update({
-                        estado: 'asignado',
-                        domiciliario_id: currentDelivery.id,
-                        domiciliario_nombre: currentDelivery.nombre,
-                        domiciliario_telefono: currentDelivery.telefono,
-                        tiempo_aceptacion: Date.now(),
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', orderId);
+                    .update(updateData)
+                    .eq('id', orderId)
+                    .select()
+                    .single();
 
-                if (error) throw error;
+                if (error) {
+                    console.error('❌ Error al actualizar pedido:', error);
+                    throw error;
+                }
+                
+                console.log('✅ Pedido actualizado exitosamente:', updatedOrder);
 
-                await supabase
+                // Actualizar estado del domiciliario
+                const { error: deliveryError } = await supabase
                     .from('domiciliarios')
                     .update({ estado: 'ocupado' })
                     .eq('id', currentDelivery.id);
+                    
+                if (deliveryError) {
+                    console.error('⚠️ Error al actualizar estado del domiciliario:', deliveryError);
+                }
 
                 showAlert('✅ ¡Pedido aceptado! Tu ubicación está siendo rastreada. Recuerda iniciar la entrega cuando salgas.', 'success');
+                
+                console.log('🔄 Recargando pedidos...');
                 await loadOrders();
+                console.log('✅ Pedidos recargados');
                 
             } catch (error) {
                 console.error('❌ Error al aceptar el pedido:', error);
@@ -1532,8 +1551,7 @@
                 await supabase
                     .from('domiciliarios')
                     .update({ 
-                        estado: 'disponible',
-                        pedidos_completados: currentDelivery.pedidos_completados + 1
+                        estado: 'disponible'
                     })
                     .eq('id', currentDelivery.id);
 
@@ -1543,6 +1561,7 @@
                 showAlert('¡Pedido completado exitosamente! 🎉', 'success');
                 await loadOrders();
             } catch (error) {
+                console.error('Error al completar pedido:', error);
                 showAlert('Error al completar pedido: ' + error.message, 'danger');
             }
         };
