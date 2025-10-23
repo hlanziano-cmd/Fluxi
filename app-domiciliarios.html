@@ -1322,9 +1322,11 @@
                                 🚀 Iniciar Entrega
                             </button>
                         ` : ''}
-                        <button class="btn btn-primary" onclick="window.completeDelivery('${order.id}')">
-                            ✅ Marcar Entregado
-                        </button>
+                        ${order.estado === 'en_camino' ? `
+                            <button class="btn btn-primary" onclick="window.completeDelivery('${order.id}')">
+                                ✅ Marcar Entregado
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
             `;
@@ -1511,58 +1513,123 @@
         };
 
         window.startDelivery = async function(orderId) {
+            console.log('🚀 ========== INICIANDO ENTREGA ==========');
+            console.log('   - Pedido ID:', orderId);
+            
+            // Deshabilitar botones temporalmente
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(btn => btn.disabled = true);
+            
             try {
                 const startTime = Date.now();
+                console.log('   - Tiempo de inicio:', new Date(startTime).toLocaleTimeString());
                 
-                const { error } = await supabase
+                const updateData = {
+                    estado: 'en_camino',
+                    tiempo_inicio_entrega: startTime,
+                    updated_at: new Date().toISOString()
+                };
+                
+                console.log('   - Datos a actualizar:', updateData);
+                
+                const { data: updatedOrder, error } = await supabase
                     .from('pedidos')
-                    .update({
-                        estado: 'en_camino',
-                        tiempo_inicio_entrega: startTime, // Guardar tiempo de inicio
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', orderId);
+                    .update(updateData)
+                    .eq('id', orderId)
+                    .select()
+                    .single();
 
-                if (error) throw error;
+                if (error) {
+                    console.error('❌ Error de Supabase:', error);
+                    throw error;
+                }
+                
+                console.log('✅ Pedido actualizado:', updatedOrder);
 
                 startTimer(startTime);
-                showAlert('¡Entrega iniciada! El temporizador está corriendo.', 'success');
+                showAlert('✅ ¡Entrega iniciada! El temporizador está corriendo.', 'success');
+                
+                console.log('🔄 Recargando pedidos...');
                 await loadOrders();
+                console.log('✅ ========== ENTREGA INICIADA EXITOSAMENTE ==========');
+                
             } catch (error) {
-                showAlert('Error al iniciar entrega: ' + error.message, 'danger');
+                console.error('❌ ========== ERROR AL INICIAR ENTREGA ==========');
+                console.error('Error completo:', error);
+                showAlert('❌ Error al iniciar entrega: ' + error.message, 'danger');
+            } finally {
+                // Rehabilitar botones
+                buttons.forEach(btn => btn.disabled = false);
             }
         };
 
         window.completeDelivery = async function(orderId) {
+            console.log('✅ ========== COMPLETANDO ENTREGA ==========');
+            console.log('   - Pedido ID:', orderId);
+            
+            // VALIDACIÓN: Verificar que el pedido esté en estado "en_camino"
+            if (activeOrder && activeOrder.estado !== 'en_camino') {
+                console.warn('⚠️ Intento de completar pedido sin iniciar');
+                showAlert('⚠️ Debes iniciar la entrega antes de marcarla como entregada. Presiona "🚀 Iniciar Entrega" primero.', 'warning');
+                return;
+            }
+            
             if (!confirm('¿Confirmas que el pedido fue entregado?')) return;
 
+            // Deshabilitar botones temporalmente
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(btn => btn.disabled = true);
+
             try {
-                const { error } = await supabase
+                const deliveryTime = Date.now();
+                console.log('   - Tiempo de entrega:', new Date(deliveryTime).toLocaleTimeString());
+                
+                const { data: updatedOrder, error } = await supabase
                     .from('pedidos')
                     .update({
                         estado: 'entregado',
-                        tiempo_entrega: Date.now(),
+                        tiempo_entrega: deliveryTime,
                         updated_at: new Date().toISOString()
                     })
-                    .eq('id', orderId);
+                    .eq('id', orderId)
+                    .select()
+                    .single();
 
-                if (error) throw error;
+                if (error) {
+                    console.error('❌ Error de Supabase:', error);
+                    throw error;
+                }
+                
+                console.log('✅ Pedido marcado como entregado:', updatedOrder);
 
-                await supabase
+                // Actualizar estado del domiciliario a disponible
+                const { error: deliveryError } = await supabase
                     .from('domiciliarios')
                     .update({ 
                         estado: 'disponible'
                     })
                     .eq('id', currentDelivery.id);
+                    
+                if (deliveryError) {
+                    console.error('⚠️ Error al actualizar estado del domiciliario:', deliveryError);
+                }
 
                 stopTimer();
                 stopLocationTracking();
                 
-                showAlert('¡Pedido completado exitosamente! 🎉', 'success');
+                showAlert('✅ ¡Pedido completado exitosamente! 🎉', 'success');
+                
+                console.log('🔄 Recargando pedidos...');
                 await loadOrders();
+                console.log('✅ ========== ENTREGA COMPLETADA EXITOSAMENTE ==========');
+                
             } catch (error) {
-                console.error('Error al completar pedido:', error);
-                showAlert('Error al completar pedido: ' + error.message, 'danger');
+                console.error('❌ ========== ERROR AL COMPLETAR ENTREGA ==========');
+                console.error('Error completo:', error);
+                showAlert('❌ Error al completar pedido: ' + error.message, 'danger');
+            } finally {
+                // Rehabilitar botones
+                buttons.forEach(btn => btn.disabled = false);
             }
         };
 
