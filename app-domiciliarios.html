@@ -688,6 +688,47 @@
         let isLocationActive = false; // Nueva variable para trackear estado de ubicación
         let locationUpdateCount = 0; // NUEVO: Contador de actualizaciones de ubicación
 
+        // Función de debug para verificar estado del sistema de ubicación
+        window.checkLocationStatus = function() {
+            console.log('📊 ========== ESTADO DEL SISTEMA DE UBICACIÓN ==========');
+            console.log('📱 Navegador:', navigator.userAgent.includes('Mobile') ? 'Móvil' : 'Desktop');
+            console.log('🗺️ Geolocalización disponible:', 'geolocation' in navigator ? '✅ SÍ' : '❌ NO');
+            console.log('👤 Domiciliario actual:', currentDelivery ? currentDelivery.nombre : '❌ No hay sesión');
+            console.log('📦 Pedido activo:', activeOrder ? `#${activeOrder.id.substring(0, 8)}` : '❌ Sin pedido');
+            console.log('📍 Sistema de ubicación:', isLocationActive ? '✅ ACTIVO' : '❌ INACTIVO');
+            console.log('⏱️ Intervalo de actualización:', locationUpdateInterval ? `✅ Corriendo (ID: ${locationUpdateInterval})` : '❌ No está corriendo');
+            console.log('👀 WatchPosition:', locationWatchId ? `✅ Activo (ID: ${locationWatchId})` : '❌ No está activo');
+            console.log('📊 Total de actualizaciones:', locationUpdateCount);
+            console.log('🕐 Hora actual:', new Date().toLocaleTimeString('es-CO'));
+            console.log('====================================================');
+            
+            if (!isLocationActive) {
+                console.warn('⚠️ ADVERTENCIA: El sistema de ubicación NO está activo.');
+                console.log('💡 Solución: Presiona el botón "Activar Ubicación" en la app.');
+            } else if (!locationUpdateInterval && !locationWatchId) {
+                console.error('❌ ERROR: El sistema dice estar activo pero no hay intervalo ni watchPosition corriendo.');
+                console.log('💡 Solución: Desactiva y vuelve a activar la ubicación.');
+            } else {
+                console.log('✅ El sistema de ubicación está funcionando correctamente.');
+            }
+            
+            return {
+                activo: isLocationActive,
+                intervalo: !!locationUpdateInterval,
+                watchPosition: !!locationWatchId,
+                actualizaciones: locationUpdateCount
+            };
+        };
+        
+        // Exponer variables globalmente para debug
+        window.debugLocationVars = {
+            get isActive() { return isLocationActive; },
+            get intervalId() { return locationUpdateInterval; },
+            get watchId() { return locationWatchId; },
+            get updateCount() { return locationUpdateCount; },
+            get currentDelivery() { return currentDelivery; }
+        };
+
         function showAlert(message, type = 'info') {
             const container = document.getElementById('alert-container') || document.getElementById('login-alert');
             const alertClass = `alert-${type}`;
@@ -1027,7 +1068,8 @@
 
         async function startLocationTracking() {
             try {
-                console.log('🔄 Iniciando seguimiento de ubicación...');
+                console.log('🔄 ========== INICIANDO SEGUIMIENTO DE UBICACIÓN ==========');
+                console.log('   Hora de inicio:', new Date().toLocaleTimeString('es-CO'));
                 
                 // Paso 1: Solicitar permiso de ubicación
                 await requestLocationPermission();
@@ -1037,35 +1079,58 @@
                 await updateLocation();
                 console.log('✅ Ubicación inicial obtenida exitosamente');
 
-                // Paso 3: Configurar actualizaciones periódicas MÁS FRECUENTES
-                // CAMBIO: De 60 segundos a 10 segundos para actualizaciones más frecuentes
+                // Paso 3: Configurar actualizaciones periódicas cada 15 segundos
+                console.log('⏱️ Configurando actualizaciones automáticas cada 15 segundos...');
                 locationUpdateInterval = setInterval(async () => {
                     try {
+                        console.log('⏰ [INTERVALO] Ejecutando actualización automática...');
                         await updateLocation();
-                        console.log('📍 Actualización periódica de ubicación (cada 10s)');
+                        console.log('✅ [INTERVALO] Actualización completada');
                     } catch (error) {
-                        console.error('Error en actualización periódica:', error);
+                        console.error('❌ [INTERVALO] Error en actualización periódica:', error);
                     }
-                }, 10000); // CAMBIADO: 10 segundos en lugar de 60
+                }, 15000); // 15 segundos
+
+                console.log('✅ Intervalo de actualización configurado (ID:', locationUpdateInterval, ')');
 
                 // Paso 4: Configurar watchPosition para actualizaciones EN MOVIMIENTO
-                // MEJORADO: Opciones más agresivas para tracking continuo
+                console.log('👀 Configurando watchPosition para actualizaciones continuas...');
                 locationWatchId = navigator.geolocation.watchPosition(
                     async (position) => {
                         try {
+                            console.log('🚶 [WATCHPOSITION] Cambio de posición detectado');
                             const locationData = {
                                 lat: position.coords.latitude,
                                 lng: position.coords.longitude,
                                 timestamp: new Date().toISOString(),
                                 accuracy: position.coords.accuracy,
-                                speed: position.coords.speed, // Velocidad si está disponible
-                                heading: position.coords.heading // Dirección si está disponible
+                                speed: position.coords.speed,
+                                heading: position.coords.heading
                             };
 
-                            await supabase
+                            console.log('💾 [WATCHPOSITION] Guardando nueva ubicación:', {
+                                lat: locationData.lat.toFixed(6),
+                                lng: locationData.lng.toFixed(6),
+                                accuracy: Math.round(locationData.accuracy) + 'm'
+                            });
+
+                            const { data, error } = await supabase
                                 .from('domiciliarios')
-                                .update({ ubicacion: locationData })
-                                .eq('id', currentDelivery.id);
+                                .update({ 
+                                    ubicacion: locationData,
+                                    updated_at: new Date().toISOString()
+                                })
+                                .eq('id', currentDelivery.id)
+                                .select();
+
+                            if (error) {
+                                console.error('❌ [WATCHPOSITION] Error al guardar:', error);
+                            } else {
+                                console.log('✅ [WATCHPOSITION] Ubicación guardada en BD');
+                            }
+
+                            // Incrementar contador
+                            locationUpdateCount++;
 
                             document.getElementById('location-indicator').classList.add('active');
                             document.getElementById('location-indicator').classList.remove('inactive');
@@ -1073,42 +1138,45 @@
                             const timeStr = new Date().toLocaleTimeString('es-CO', { 
                                 hour: '2-digit', 
                                 minute: '2-digit',
-                                second: '2-digit' // AGREGADO: mostrar segundos
+                                second: '2-digit'
                             });
                             
-                            document.getElementById('location-status').textContent = 'Ubicación activa - Actualizado: ' + timeStr;
+                            document.getElementById('location-status').textContent = 
+                                `Ubicación activa - Actualizado: ${timeStr} (${locationUpdateCount} actualizaciones)`;
                             
                             // Actualizar UI del control de ubicación
                             updateLocationUI(true);
                             
-                            console.log('📍 Ubicación actualizada (watchPosition):', {
-                                lat: locationData.lat.toFixed(6),
-                                lng: locationData.lng.toFixed(6),
-                                accuracy: Math.round(locationData.accuracy) + 'm'
-                            });
+                            console.log(`✅ [WATCHPOSITION] Actualización #${locationUpdateCount} completada`);
                         } catch (error) {
-                            console.error('Error en watchPosition:', error);
+                            console.error('❌ [WATCHPOSITION] Error:', error);
                         }
                     },
                     (error) => {
-                        console.error('Error de watchPosition:', error);
+                        console.error('❌ [WATCHPOSITION] Error de watchPosition:', error.code, error.message);
                         showAlert('⚠️ Error continuo de ubicación. Verifica tus permisos.', 'warning');
                     },
                     { 
-                        enableHighAccuracy: true,  // MANTENER: precisión alta
-                        timeout: 10000,            // CAMBIADO: 10 segundos de timeout (antes 5)
-                        maximumAge: 0              // CAMBIADO: 0 = siempre obtener ubicación fresca (antes 30000)
+                        enableHighAccuracy: true,
+                        timeout: 15000,
+                        maximumAge: 0
                     }
                 );
 
-                console.log('✅ Seguimiento de ubicación iniciado correctamente');
-                console.log('📍 Actualizaciones cada 10 segundos + watchPosition continuo');
-                isLocationActive = true; // Marcar ubicación como activa
-                updateLocationUI(true); // Actualizar UI
+                console.log('✅ watchPosition configurado (ID:', locationWatchId, ')');
+                console.log('✅ ========== SEGUIMIENTO DE UBICACIÓN INICIADO ==========');
+                console.log('📍 Sistema activo con:');
+                console.log('   - Actualización automática cada 15 segundos');
+                console.log('   - WatchPosition para detectar movimiento');
+                console.log('   - Total actualizaciones hasta ahora:', locationUpdateCount);
+                
+                isLocationActive = true;
+                updateLocationUI(true);
                 return true;
                 
             } catch (error) {
-                console.error('❌ Error al iniciar seguimiento de ubicación:', error);
+                console.error('❌ ========== ERROR AL INICIAR SEGUIMIENTO ==========');
+                console.error('Error completo:', error);
                 
                 // Limpiar cualquier configuración parcial
                 stopLocationTracking();
@@ -1150,26 +1218,39 @@
         }
 
         function stopLocationTracking() {
+            console.log('🛑 ========== DETENIENDO SEGUIMIENTO DE UBICACIÓN ==========');
+            
             if (locationWatchId) {
+                console.log('   🗑️ Limpiando watchPosition (ID:', locationWatchId, ')');
                 navigator.geolocation.clearWatch(locationWatchId);
                 locationWatchId = null;
+                console.log('   ✅ watchPosition detenido');
+            } else {
+                console.log('   ℹ️ No había watchPosition activo');
             }
+            
             if (locationUpdateInterval) {
+                console.log('   🗑️ Limpiando intervalo de actualización (ID:', locationUpdateInterval, ')');
                 clearInterval(locationUpdateInterval);
                 locationUpdateInterval = null;
+                console.log('   ✅ Intervalo de actualización detenido');
+            } else {
+                console.log('   ℹ️ No había intervalo activo');
             }
+            
             document.getElementById('location-indicator').classList.remove('active');
             document.getElementById('location-indicator').classList.add('inactive');
             document.getElementById('location-status').textContent = 'Ubicación desactivada';
             
             // Resetear contador
+            console.log('   📊 Total de actualizaciones realizadas:', locationUpdateCount);
             locationUpdateCount = 0;
             
             // Actualizar estado y UI
             isLocationActive = false;
             updateLocationUI(false);
             
-            console.log('🛑 Seguimiento de ubicación detenido');
+            console.log('✅ ========== SEGUIMIENTO DE UBICACIÓN DETENIDO ==========');
         }
 
         window.toggleLocation = async function() {
