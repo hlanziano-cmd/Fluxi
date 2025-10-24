@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fluxi - Domiciliario</title>
+    
+    <!-- 🔒 META TAGS ANTI-CACHÉ -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
     <style>
         * {
             margin: 0;
@@ -677,6 +683,44 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxiaWZiZXhobXZiYW52cmpmZ2xwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5Mjg5MDQsImV4cCI6MjA3NjUwNDkwNH0.ZXjCv4DkNobkn3IDK9wYBjjOV55Bf_UwcSxhkt6YqGo';
 
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // 🔖 SISTEMA DE VERSIONES Y CONTROL DE CACHÉ
+        const APP_VERSION = '2.1.0'; // ACTUALIZADO: 24-Oct-2024 - Fix tracking de ubicación
+        const VERSION_KEY = 'fluxi_delivery_version';
+        
+        // Verificar versión y detectar caché
+        (function checkVersion() {
+            console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #667eea; font-weight: bold;');
+            console.log('%c🔖 Fluxi Domiciliario - Versión ' + APP_VERSION, 'color: #667eea; font-weight: bold; font-size: 14px;');
+            console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #667eea; font-weight: bold;');
+            
+            const savedVersion = localStorage.getItem(VERSION_KEY);
+            
+            if (savedVersion !== APP_VERSION) {
+                if (savedVersion) {
+                    console.log('%c🆕 NUEVA VERSIÓN DETECTADA', 'color: #27ae60; font-weight: bold; font-size: 13px;');
+                    console.log('%c   Versión anterior:', 'color: #95a5a6;', savedVersion);
+                    console.log('%c   Versión actual:', 'color: #27ae60;', APP_VERSION);
+                    console.log('%c   ✅ Novedades: Actualización final de ubicación al completar entregas', 'color: #3498db;');
+                    
+                    // Mostrar notificación al usuario
+                    setTimeout(() => {
+                        showAlert('🆕 Nueva versión ' + APP_VERSION + ' instalada. Ahora la ubicación se actualiza al completar entregas.', 'success');
+                    }, 2000);
+                }
+                
+                // Guardar nueva versión
+                localStorage.setItem(VERSION_KEY, APP_VERSION);
+            } else {
+                console.log('%c✅ Versión actual:', 'color: #27ae60;', APP_VERSION);
+            }
+            
+            console.log('%c💡 TIP: Si ves problemas, cierra y abre la app de nuevo', 'color: #f39c12; font-style: italic;');
+            console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n', 'color: #667eea; font-weight: bold;');
+        })();
+        
+        // Exponer versión globalmente
+        window.FLUXI_VERSION = APP_VERSION;
 
         let currentDelivery = null;
         let activeOrder = null;
@@ -1727,6 +1771,20 @@
             buttons.forEach(btn => btn.disabled = true);
 
             try {
+                // 🆕 ACTUALIZAR UBICACIÓN UNA ÚLTIMA VEZ ANTES DE COMPLETAR
+                console.log('📍 Actualizando ubicación final antes de completar...');
+                try {
+                    if (isLocationActive) {
+                        await updateLocation();
+                        console.log('✅ Ubicación final actualizada');
+                    } else {
+                        console.warn('⚠️ Ubicación no estaba activa, no se pudo actualizar ubicación final');
+                    }
+                } catch (locError) {
+                    console.warn('⚠️ Error al actualizar ubicación final (no crítico):', locError);
+                    // No detenemos el proceso por este error
+                }
+
                 const deliveryTime = Date.now();
                 console.log('   - Tiempo de entrega:', new Date(deliveryTime).toLocaleTimeString());
                 
@@ -1802,6 +1860,31 @@
         });
 
         window.addEventListener('load', async () => {
+            // Agregar badge de versión en la UI
+            setTimeout(() => {
+                const versionBadge = document.createElement('div');
+                versionBadge.style.cssText = `
+                    position: fixed;
+                    bottom: 10px;
+                    right: 10px;
+                    background: rgba(102, 126, 234, 0.9);
+                    color: white;
+                    padding: 5px 12px;
+                    border-radius: 15px;
+                    font-size: 11px;
+                    font-weight: bold;
+                    z-index: 1000;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                    cursor: pointer;
+                `;
+                versionBadge.textContent = `v${APP_VERSION}`;
+                versionBadge.title = 'Toca para ver información';
+                versionBadge.onclick = () => {
+                    showAlert(`Fluxi Domiciliario v${APP_VERSION}\n\nÚltima actualización: 24-Oct-2024\n\nMejoras: Ubicación GPS al completar entregas`, 'info');
+                };
+                document.body.appendChild(versionBadge);
+            }, 1000);
+            
             const saved = localStorage.getItem('fluxi_delivery');
             if (saved) {
                 currentDelivery = JSON.parse(saved);

@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fluxi - Sistema de Domicilios</title>
     
+    <!-- 🔒 META TAGS ANTI-CACHÉ -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
@@ -944,6 +949,114 @@
             console.error('Error al conectar con Supabase:', error);
         }
 
+        // 🔖 SISTEMA DE VERSIONES Y CONTROL DE CACHÉ
+        const APP_VERSION = '2.1.0'; // ACTUALIZADO: 24-Oct-2024 - Fix tracking de ubicación
+        const VERSION_KEY = 'fluxi_admin_version';
+        
+        // Verificar versión y detectar caché
+        (function checkVersion() {
+            console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #3498db; font-weight: bold;');
+            console.log('%c🔖 Fluxi Admin - Versión ' + APP_VERSION, 'color: #3498db; font-weight: bold; font-size: 14px;');
+            console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #3498db; font-weight: bold;');
+            
+            const savedVersion = localStorage.getItem(VERSION_KEY);
+            
+            if (savedVersion !== APP_VERSION) {
+                if (savedVersion) {
+                    console.log('%c🆕 NUEVA VERSIÓN DETECTADA', 'color: #27ae60; font-weight: bold; font-size: 13px;');
+                    console.log('%c   Versión anterior:', 'color: #95a5a6;', savedVersion);
+                    console.log('%c   Versión actual:', 'color: #27ae60;', APP_VERSION);
+                    console.log('%c   ✅ Novedades: Fix en actualización de ubicación GPS', 'color: #3498db;');
+                    
+                    // Mostrar notificación al usuario
+                    setTimeout(() => {
+                        const notification = document.createElement('div');
+                        notification.style.cssText = `
+                            position: fixed;
+                            top: 20px;
+                            right: 20px;
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            color: white;
+                            padding: 20px;
+                            border-radius: 10px;
+                            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                            z-index: 10000;
+                            max-width: 350px;
+                            animation: slideIn 0.5s ease-out;
+                        `;
+                        notification.innerHTML = `
+                            <div style="font-size: 16px; font-weight: bold; margin-bottom: 10px;">
+                                🆕 Nueva Versión ${APP_VERSION}
+                            </div>
+                            <div style="font-size: 13px; margin-bottom: 15px;">
+                                • Mejorado tracking de ubicación GPS<br>
+                                • Indicadores visuales de frescura<br>
+                                • Actualización final al completar entregas
+                            </div>
+                            <button onclick="this.parentElement.remove()" style="
+                                background: white;
+                                color: #667eea;
+                                border: none;
+                                padding: 8px 15px;
+                                border-radius: 5px;
+                                cursor: pointer;
+                                font-weight: bold;
+                                width: 100%;
+                            ">¡Entendido!</button>
+                        `;
+                        document.body.appendChild(notification);
+                        
+                        // Auto-cerrar después de 15 segundos
+                        setTimeout(() => {
+                            if (notification.parentElement) {
+                                notification.remove();
+                            }
+                        }, 15000);
+                    }, 2000);
+                }
+                
+                // Guardar nueva versión
+                localStorage.setItem(VERSION_KEY, APP_VERSION);
+            } else {
+                console.log('%c✅ Versión actual:', 'color: #27ae60;', APP_VERSION);
+            }
+            
+            // Agregar información de versión al footer
+            setTimeout(() => {
+                const versionInfo = document.createElement('div');
+                versionInfo.style.cssText = `
+                    position: fixed;
+                    bottom: 10px;
+                    right: 10px;
+                    background: rgba(0,0,0,0.7);
+                    color: white;
+                    padding: 5px 10px;
+                    border-radius: 5px;
+                    font-size: 11px;
+                    z-index: 1000;
+                    cursor: pointer;
+                `;
+                versionInfo.textContent = `v${APP_VERSION}`;
+                versionInfo.title = 'Haz clic para ver información de versión';
+                versionInfo.onclick = () => {
+                    alert(`Fluxi Admin v${APP_VERSION}\n\n` +
+                          `Última actualización: 24-Oct-2024\n\n` +
+                          `Mejoras en esta versión:\n` +
+                          `• Fix tracking de ubicación GPS\n` +
+                          `• Indicadores visuales de frescura\n` +
+                          `• Actualización final al completar entregas\n\n` +
+                          `Si ves problemas, presiona Ctrl+Shift+R para recargar sin caché.`);
+                };
+                document.body.appendChild(versionInfo);
+            }, 1000);
+            
+            console.log('%c💡 TIP: Si ves problemas, presiona Ctrl+Shift+R', 'color: #f39c12; font-style: italic;');
+            console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n', 'color: #3498db; font-weight: bold;');
+        })();
+        
+        // Exponer versión globalmente
+        window.FLUXI_VERSION = APP_VERSION;
+
         let currentUserId = null;
         let currentDeliveryId = null;
         let currentOrderId = null;
@@ -1760,10 +1873,25 @@
                     const lastUpdate = new Date(data.ubicacion.timestamp);
                     const now = new Date();
                     const diffMinutes = Math.floor((now - lastUpdate) / 60000);
-                    const timeAgo = diffMinutes === 0 ? 'Hace menos de 1 minuto' : 
-                                   diffMinutes === 1 ? 'Hace 1 minuto' : 
-                                   diffMinutes > 60 ? `Hace ${Math.floor(diffMinutes/60)}h ${diffMinutes%60}m` :
-                                   `Hace ${diffMinutes} minutos`;
+                    const diffSeconds = Math.floor((now - lastUpdate) / 1000);
+                    
+                    let timeAgo;
+                    let statusEmoji;
+                    if (diffSeconds < 60) {
+                        timeAgo = diffSeconds === 0 ? 'Ahora mismo' : `Hace ${diffSeconds} segundo${diffSeconds !== 1 ? 's' : ''}`;
+                        statusEmoji = '🟢';
+                    } else if (diffMinutes < 2) {
+                        timeAgo = 'Hace 1 minuto';
+                        statusEmoji = '🟢';
+                    } else if (diffMinutes < 60) {
+                        timeAgo = `Hace ${diffMinutes} minutos`;
+                        statusEmoji = diffMinutes <= 5 ? '🟢' : (diffMinutes <= 15 ? '🟡' : '🔴');
+                    } else {
+                        const hours = Math.floor(diffMinutes / 60);
+                        const mins = diffMinutes % 60;
+                        timeAgo = `Hace ${hours}h ${mins}m`;
+                        statusEmoji = '🔴';
+                    }
                     
                     const accuracy = data.ubicacion.accuracy ? ` (±${Math.round(data.ubicacion.accuracy)}m)` : '';
                     
@@ -1800,7 +1928,7 @@
                         <div style="text-align: center;">
                             <strong style="font-size: 14px;">${data.nombre}</strong><br>
                             <div style="margin: 5px 0;">📍 Ubicación actual</div>
-                            <small style="color: #666;">🕒 ${timeAgo}${accuracy}</small><br>
+                            <small style="color: #666;">${statusEmoji} ${timeAgo}${accuracy}</small><br>
                             <small style="color: #999;">Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}</small>
                         </div>
                     `).openPopup();
@@ -1809,6 +1937,12 @@
                     console.log('   🗺️ Centrando mapa en la nueva ubicación...');
                     trackingMap.setView([lat, lng], 16);
                     console.log('   ✅ Mapa centrado en:', trackingMap.getCenter());
+                    
+                    // Actualizar el elemento de última actualización con información más detallada
+                    const updateTimeEl = document.getElementById('tracking-update-time');
+                    if (updateTimeEl) {
+                        updateTimeEl.innerHTML = `${statusEmoji} ${timeAgo}<br><small style="color: #999;">${lastUpdate.toLocaleString('es-CO')}</small>`;
+                    }
                     
                     // Forzar re-render del mapa
                     setTimeout(() => {
@@ -1825,11 +1959,14 @@
                         lng,
                         timestamp: data.ubicacion.timestamp,
                         nombre: data.nombre,
-                        updatedAt: new Date().toISOString()
+                        updatedAt: new Date().toISOString(),
+                        ageMinutes: diffMinutes,
+                        ageSeconds: diffSeconds
                     };
                     
                     console.log('✅ ========== FIN loadDeliveryLocation - MARCADOR ACTUALIZADO EXITOSAMENTE ==========');
                     console.log('   💾 Última actualización guardada en window.lastLocationUpdate para debug');
+                    console.log('   ⏰ Antigüedad:', diffMinutes, 'minutos (', diffSeconds, 'segundos )');
                     
                 } else {
                     // No hay ubicación disponible
