@@ -925,14 +925,28 @@
         function requestLocationPermission() {
             return new Promise((resolve, reject) => {
                 if (!navigator.geolocation) {
-                    reject(new Error('Geolocalización no soportada'));
+                    reject(new Error('Tu navegador no soporta geolocalización. Usa Chrome, Firefox o Safari.'));
                     return;
                 }
 
+                // Verificar si estamos en HTTPS o localhost
+                if (location.protocol !== 'https:' && !location.hostname.includes('localhost') && location.hostname !== '127.0.0.1') {
+                    reject(new Error('⚠️ La geolocalización requiere HTTPS. Asegúrate de acceder con https:// en la URL.'));
+                    return;
+                }
+
+                console.log('📍 Solicitando permisos de ubicación...');
+                
                 navigator.geolocation.getCurrentPosition(
-                    () => resolve(true),
-                    (error) => reject(error),
-                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                    (position) => {
+                        console.log('✅ Permisos otorgados');
+                        resolve(true);
+                    },
+                    (error) => {
+                        console.error('❌ Error al solicitar permisos:', error);
+                        reject(error);
+                    },
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
                 );
             });
         }
@@ -1040,20 +1054,20 @@
                         let errorMessage = 'Error al obtener ubicación. ';
                         switch(error.code) {
                             case error.PERMISSION_DENIED:
-                                errorMessage += 'Permisos de ubicación denegados.';
+                                errorMessage = 'Permisos de ubicación denegados. Por favor, permite el acceso a tu ubicación en la configuración del navegador.';
                                 break;
                             case error.POSITION_UNAVAILABLE:
-                                errorMessage += 'Ubicación no disponible.';
+                                errorMessage = 'Ubicación no disponible. Verifica que el GPS esté activado y que tengas buena señal.';
                                 break;
                             case error.TIMEOUT:
-                                errorMessage += 'Tiempo de espera agotado.';
+                                errorMessage = 'Tiempo de espera agotado. Intenta nuevamente o ve a un lugar con mejor señal GPS.';
                                 break;
                             default:
                                 errorMessage += error.message;
                         }
                         reject(new Error(errorMessage));
                     },
-                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                    { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
                 );
             });
         }
@@ -1931,6 +1945,61 @@
                 setInterval(loadOrders, 30000);
             }
         });
+
+        // Función de diagnóstico para problemas de ubicación
+        window.diagnosticarUbicacion = async function() {
+            console.log('🔍 ========== DIAGNÓSTICO DE UBICACIÓN ==========');
+            
+            // 1. Verificar navegador
+            console.log('1️⃣ Navegador:', navigator.userAgent);
+            console.log('   - Geolocalización disponible:', 'geolocation' in navigator ? '✅ Sí' : '❌ No');
+            
+            // 2. Verificar protocolo
+            console.log('2️⃣ Protocolo:', location.protocol);
+            console.log('   - Es HTTPS o localhost:', (location.protocol === 'https:' || location.hostname.includes('localhost')) ? '✅ Sí' : '❌ No');
+            
+            // 3. Verificar permisos
+            if ('permissions' in navigator) {
+                try {
+                    const result = await navigator.permissions.query({ name: 'geolocation' });
+                    console.log('3️⃣ Estado de permisos:', result.state);
+                    console.log('   - Granted (Otorgado):', result.state === 'granted' ? '✅' : '❌');
+                    console.log('   - Prompt (Preguntar):', result.state === 'prompt' ? '⚠️' : '✅');
+                    console.log('   - Denied (Denegado):', result.state === 'denied' ? '❌' : '✅');
+                } catch (e) {
+                    console.log('3️⃣ No se pudo verificar estado de permisos');
+                }
+            }
+            
+            // 4. Intentar obtener ubicación
+            console.log('4️⃣ Intentando obtener ubicación de prueba...');
+            try {
+                const position = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    });
+                });
+                console.log('   ✅ Ubicación obtenida exitosamente:', {
+                    lat: position.coords.latitude.toFixed(6),
+                    lng: position.coords.longitude.toFixed(6),
+                    accuracy: Math.round(position.coords.accuracy) + 'm'
+                });
+                showAlert('✅ GPS funcionando correctamente. Latitud: ' + position.coords.latitude.toFixed(6) + ', Longitud: ' + position.coords.longitude.toFixed(6), 'success');
+            } catch (error) {
+                console.log('   ❌ Error al obtener ubicación:', error.message);
+                console.log('   Código de error:', error.code);
+                showAlert('❌ Error: ' + error.message, 'danger');
+            }
+            
+            console.log('✅ ========== FIN DEL DIAGNÓSTICO ==========');
+        };
+
+        // Mensaje de ayuda en consola
+        console.log('🔧 AYUDA: Si tienes problemas con la ubicación, ejecuta en la consola:');
+        console.log('   diagnosticarUbicacion()');
+
     </script>
 </body>
 </html>
