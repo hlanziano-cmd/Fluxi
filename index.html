@@ -473,6 +473,7 @@
                             <tr>
                                 <th>Nombre</th>
                                 <th>Teléfono</th>
+                                <th>Tipo</th>
                                 <th>Estado</th>
                                 <th>Última Ubicación</th>
                                 <th>Acciones</th>
@@ -480,7 +481,7 @@
                         </thead>
                         <tbody id="delivery-table-body">
                             <tr>
-                                <td colspan="5" style="text-align: center; padding: 30px;">Cargando...</td>
+                                <td colspan="6" style="text-align: center; padding: 30px;">Cargando...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -790,6 +791,18 @@
                     <label>Número de Teléfono *</label>
                     <input type="tel" id="delivery-phone" required value="+57" placeholder="+573001234567">
                     <small style="color: #7f8c8d; font-size: 12px;">Formato: +57 seguido del número</small>
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Domiciliario *</label>
+                    <select id="delivery-type" required>
+                        <option value="">Seleccionar...</option>
+                        <option value="propio">Propio</option>
+                        <option value="rappi">Rappi</option>
+                    </select>
+                    <small style="color: #7f8c8d; font-size: 12px;">
+                        • Propio: Domiciliario de la empresa<br>
+                        • Rappi: Domiciliario externo (Rappi, etc.)
+                    </small>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" id="btn-cancel-delivery">Cancelar</button>
@@ -1172,34 +1185,42 @@
                 }
                 
                 if (!result.data || result.data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px;">No hay domiciliarios</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px;">No hay domiciliarios</td></tr>';
                     return;
                 }
                 
                 result.data.forEach(delivery => {
                     const row = tbody.insertRow();
-                    row.innerHTML = `<td><strong>${delivery.nombre}</strong></td><td>${delivery.telefono}</td><td></td><td></td><td class="actions-cell"></td>`;
+                    row.innerHTML = `<td><strong>${delivery.nombre}</strong></td><td>${delivery.telefono}</td><td></td><td></td><td></td><td class="actions-cell"></td>`;
                     
+                    // Tipo
+                    const tipoBadge = document.createElement('span');
+                    tipoBadge.className = 'badge ' + (delivery.tipo === 'propio' ? 'badge-primary' : 'badge-info');
+                    tipoBadge.textContent = delivery.tipo === 'propio' ? 'Propio' : delivery.tipo === 'rappi' ? 'Rappi' : 'N/A';
+                    row.cells[2].appendChild(tipoBadge);
+                    
+                    // Estado
                     const statusBadge = document.createElement('span');
                     statusBadge.className = 'badge ' + (delivery.estado === 'disponible' ? 'badge-success' : delivery.estado === 'ocupado' ? 'badge-warning' : 'badge-danger');
                     statusBadge.textContent = delivery.estado.charAt(0).toUpperCase() + delivery.estado.slice(1);
-                    row.cells[2].appendChild(statusBadge);
+                    row.cells[3].appendChild(statusBadge);
                     
+                    // Ubicación
                     const location = delivery.ubicacion ? new Date(delivery.ubicacion.timestamp).toLocaleString('es-CO') : 'Sin ubicación';
-                    row.cells[3].textContent = location;
-                    row.cells[3].style.fontSize = '12px';
+                    row.cells[4].textContent = location;
+                    row.cells[4].style.fontSize = '12px';
                     
                     const editBtn = document.createElement('button');
                     editBtn.className = 'btn btn-primary btn-small';
                     editBtn.textContent = 'Editar';
                     editBtn.onclick = () => openDeliveryModal(delivery);
-                    row.cells[4].appendChild(editBtn);
+                    row.cells[5].appendChild(editBtn);
                     
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'btn btn-danger btn-small';
                     deleteBtn.textContent = 'Eliminar';
                     deleteBtn.onclick = () => deleteDelivery(delivery.id);
-                    row.cells[4].appendChild(deleteBtn);
+                    row.cells[5].appendChild(deleteBtn);
                     
                     if (delivery.ubicacion && delivery.ubicacion.lat && delivery.ubicacion.lng) {
                         updateMarker(delivery.id, delivery);
@@ -1235,6 +1256,7 @@
             document.getElementById('delivery-modal-title').textContent = delivery ? 'Editar Domiciliario' : 'Nuevo Domiciliario';
             document.getElementById('delivery-name').value = delivery ? delivery.nombre : '';
             document.getElementById('delivery-phone').value = delivery ? delivery.telefono : '+57';
+            document.getElementById('delivery-type').value = delivery ? (delivery.tipo || 'propio') : '';
             document.getElementById('delivery-modal').classList.add('active');
         }
 
@@ -1242,6 +1264,7 @@
             document.getElementById('delivery-modal').classList.remove('active');
             document.getElementById('delivery-form').reset();
             document.getElementById('delivery-phone').value = '+57';
+            document.getElementById('delivery-type').value = '';
             currentDeliveryId = null;
         }
 
@@ -1270,6 +1293,7 @@
             const deliveryData = {
                 nombre: document.getElementById('delivery-name').value,
                 telefono: document.getElementById('delivery-phone').value,
+                tipo: document.getElementById('delivery-type').value,
                 estado: 'disponible',
                 updated_at: new Date().toISOString()
             };

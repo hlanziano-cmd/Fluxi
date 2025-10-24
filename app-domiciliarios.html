@@ -1391,11 +1391,14 @@
                         .eq('id', currentDelivery.id);
                 }
 
+                // ✅ Filtrar pedidos según el tipo de domiciliario
+                // Solo mostrar pedidos del tipo correspondiente (propio/rappi)
                 const { data: availableOrders } = await supabase
                     .from('pedidos')
                     .select('*')
                     .eq('estado', 'pendiente')
                     .is('domiciliario_id', null)
+                    .eq('tipo_domiciliario', currentDelivery.tipo || 'propio')
                     .order('created_at', { ascending: false });
 
                 renderAvailableOrders(availableOrders || []);
@@ -1578,16 +1581,24 @@
                 console.log('🔍 deliveryData:', deliveryData);
 
                 if (!deliveryData || !deliveryData.ubicacion || !deliveryData.ubicacion.lat) {
-                    throw new Error('No se pudo verificar tu ubicación. Intenta nuevamente.');
+                    throw new Error('⚠️ No se detectó tu ubicación.\n\n' +
+                                    '1. Asegúrate de haber activado tu ubicación (botón verde arriba)\n' +
+                                    '2. Espera unos segundos a que el GPS se active\n' +
+                                    '3. Intenta aceptar el pedido nuevamente\n\n' +
+                                    'Si el problema persiste, recarga la página.');
                 }
 
-                // Verificar que la ubicación sea reciente (menos de 2 minutos)
+                // Verificar que la ubicación sea reciente (menos de 5 minutos)
                 const locationTimestamp = new Date(deliveryData.ubicacion.timestamp);
                 const now = new Date();
                 const diffMinutes = (now - locationTimestamp) / 1000 / 60;
                 
-                if (diffMinutes > 2) {
-                    throw new Error('Tu ubicación no está actualizada. Por favor, espera un momento e intenta de nuevo.');
+                if (diffMinutes > 5) {
+                    throw new Error('⚠️ Tu ubicación no está actualizada (última actualización hace ' + Math.round(diffMinutes) + ' minutos).\n\n' +
+                                    '1. Verifica que el botón de ubicación esté verde\n' +
+                                    '2. Espera unos segundos\n' +
+                                    '3. Intenta aceptar el pedido nuevamente\n\n' +
+                                    'Si el problema persiste, desactiva y vuelve a activar tu ubicación.');
                 }
 
                 console.log('✅ Ubicación verificada y actual:', deliveryData.ubicacion);
