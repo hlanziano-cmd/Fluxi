@@ -867,6 +867,8 @@
                     return;
                 }
 
+                console.log('🔄 Solicitando ubicación GPS...');
+
                 navigator.geolocation.getCurrentPosition(
                     async (position) => {
                         try {
@@ -879,10 +881,46 @@
                                 heading: position.coords.heading
                             };
 
-                            await supabase
+                            console.log('📍 Ubicación GPS obtenida:', {
+                                lat: locationData.lat.toFixed(6),
+                                lng: locationData.lng.toFixed(6),
+                                accuracy: Math.round(locationData.accuracy) + 'm',
+                                timestamp: locationData.timestamp
+                            });
+
+                            console.log('💾 Guardando en base de datos...');
+                            const { data: updateResult, error: updateError } = await supabase
                                 .from('domiciliarios')
-                                .update({ ubicacion: locationData })
-                                .eq('id', currentDelivery.id);
+                                .update({ 
+                                    ubicacion: locationData,
+                                    updated_at: new Date().toISOString()
+                                })
+                                .eq('id', currentDelivery.id)
+                                .select();
+
+                            if (updateError) {
+                                console.error('❌ Error al guardar ubicación:', updateError);
+                                throw updateError;
+                            }
+
+                            console.log('✅ Ubicación guardada exitosamente en BD:', updateResult);
+
+                            // Verificar que se guardó correctamente
+                            const { data: verifyData, error: verifyError } = await supabase
+                                .from('domiciliarios')
+                                .select('ubicacion')
+                                .eq('id', currentDelivery.id)
+                                .single();
+
+                            if (verifyData && verifyData.ubicacion) {
+                                console.log('✅ Verificación: Ubicación confirmada en BD:', {
+                                    lat: verifyData.ubicacion.lat.toFixed(6),
+                                    lng: verifyData.ubicacion.lng.toFixed(6),
+                                    timestamp: verifyData.ubicacion.timestamp
+                                });
+                            } else {
+                                console.warn('⚠️ Advertencia: No se pudo verificar la ubicación en BD');
+                            }
 
                             // Incrementar contador de actualizaciones
                             locationUpdateCount++;
@@ -902,7 +940,7 @@
                             // Actualizar UI del control de ubicación
                             updateLocationUI(true);
                             
-                            console.log(`📍 [${locationUpdateCount}] Ubicación actualizada:`, {
+                            console.log(`📍 [${locationUpdateCount}] Ubicación actualizada completamente:`, {
                                 lat: locationData.lat.toFixed(6),
                                 lng: locationData.lng.toFixed(6),
                                 accuracy: Math.round(locationData.accuracy) + 'm',
@@ -911,12 +949,12 @@
                             
                             resolve(locationData);
                         } catch (error) {
-                            console.error('Error actualizando ubicación:', error);
+                            console.error('❌ Error actualizando ubicación:', error);
                             reject(error);
                         }
                     },
                     (error) => {
-                        console.error('Error de geolocalización:', error);
+                        console.error('❌ Error de geolocalización:', error);
                         let errorMessage = 'Error al obtener ubicación. ';
                         switch(error.code) {
                             case error.PERMISSION_DENIED:

@@ -1666,6 +1666,7 @@
         async function loadDeliveryLocation(deliveryId) {
             console.log('📍 ========== INICIO loadDeliveryLocation ==========');
             console.log('   - Domiciliario ID:', deliveryId.substring(0, 8));
+            console.log('   - Timestamp de consulta:', new Date().toLocaleTimeString('es-CO'));
             
             // Verificar que el mapa esté inicializado
             if (!trackingMap) {
@@ -1682,10 +1683,12 @@
             }
             
             try {
-                console.log('   🔍 Consultando ubicación en la base de datos...');
+                console.log('   🔍 Consultando ubicación en la base de datos (sin caché)...');
+                
+                // Hacer la consulta SIN caché para obtener datos frescos
                 const { data, error } = await supabase
                     .from('domiciliarios')
-                    .select('ubicacion, nombre')
+                    .select('ubicacion, nombre, updated_at')
                     .eq('id', deliveryId)
                     .single();
                 
@@ -1694,19 +1697,35 @@
                     throw error;
                 }
                 
-                console.log('   📦 Datos recibidos:', data);
-                console.log('   📦 Ubicación:', data?.ubicacion);
+                console.log('   📦 Datos recibidos completos:', {
+                    nombre: data?.nombre,
+                    updated_at: data?.updated_at,
+                    tiene_ubicacion: !!data?.ubicacion,
+                    ubicacion_completa: data?.ubicacion
+                });
+                
+                if (data?.ubicacion) {
+                    console.log('   📍 Detalles de ubicación:');
+                    console.log('      - Latitud:', data.ubicacion.lat);
+                    console.log('      - Longitud:', data.ubicacion.lng);
+                    console.log('      - Timestamp:', data.ubicacion.timestamp);
+                    console.log('      - Precisión:', data.ubicacion.accuracy ? `${Math.round(data.ubicacion.accuracy)}m` : 'N/A');
+                }
                 
                 if (data && data.ubicacion && data.ubicacion.lat && data.ubicacion.lng) {
-                    console.log('✅ Ubicación GPS encontrada:', {
-                        lat: data.ubicacion.lat.toFixed(6),
-                        lng: data.ubicacion.lng.toFixed(6),
-                        timestamp: data.ubicacion.timestamp
+                    const lat = parseFloat(data.ubicacion.lat);
+                    const lng = parseFloat(data.ubicacion.lng);
+                    
+                    console.log('✅ Ubicación GPS encontrada y validada:', {
+                        lat: lat.toFixed(6),
+                        lng: lng.toFixed(6),
+                        timestamp: data.ubicacion.timestamp,
+                        nombre: data.nombre
                     });
                     
                     // Remover marcador anterior
                     if (trackingMarker) {
-                        console.log('   🗑️ Removiendo marcador anterior...');
+                        console.log('   🗑️ Removiendo marcador anterior en posición:', trackingMarker.getLatLng());
                         trackingMap.removeLayer(trackingMarker);
                         trackingMarker = null;
                         window.trackingMarker = null;
@@ -1729,10 +1748,13 @@
                     if (diffMinutes > 30) markerColor = '#e74c3c'; // Rojo si es muy antigua
                     else if (diffMinutes > 10) markerColor = '#f39c12'; // Amarillo si es un poco antigua
                     
-                    console.log('   ⏰ Antigüedad:', diffMinutes, 'minutos -', markerColor === '#27ae60' ? '🟢 Reciente' : markerColor === '#f39c12' ? '🟡 Antigua' : '🔴 Muy antigua');
+                    console.log('   ⏰ Antigüedad de la ubicación:', diffMinutes, 'minutos -', 
+                        markerColor === '#27ae60' ? '🟢 Reciente' : 
+                        markerColor === '#f39c12' ? '🟡 Antigua' : 
+                        '🔴 Muy antigua');
                     
                     // Crear icono personalizado
-                    console.log('   🎨 Creando marcador personalizado...');
+                    console.log('   🎨 Creando nuevo marcador personalizado...');
                     const iconDiv = document.createElement('div');
                     iconDiv.style.cssText = `background:${markerColor};width:40px;height:40px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:20px`;
                     iconDiv.textContent = '🏍️';
@@ -1743,36 +1765,47 @@
                         iconAnchor: [20, 20]
                     });
                     
-                    // Crear y agregar marcador
-                    console.log('   📍 Agregando marcador al mapa...');
-                    trackingMarker = L.marker([data.ubicacion.lat, data.ubicacion.lng], { icon: customIcon })
+                    // Crear y agregar marcador en la NUEVA ubicación
+                    console.log('   📍 Agregando NUEVO marcador al mapa en:', { lat, lng });
+                    trackingMarker = L.marker([lat, lng], { icon: customIcon })
                         .addTo(trackingMap);
+                    
+                    console.log('   ✅ Marcador agregado exitosamente en posición:', trackingMarker.getLatLng());
                     
                     trackingMarker.bindPopup(`
                         <div style="text-align: center;">
                             <strong style="font-size: 14px;">${data.nombre}</strong><br>
                             <div style="margin: 5px 0;">📍 Ubicación actual</div>
                             <small style="color: #666;">🕒 ${timeAgo}${accuracy}</small><br>
-                            <small style="color: #999;">Lat: ${data.ubicacion.lat.toFixed(6)}, Lng: ${data.ubicacion.lng.toFixed(6)}</small>
+                            <small style="color: #999;">Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}</small>
                         </div>
                     `).openPopup();
                     
-                    // Centrar el mapa en la ubicación
+                    // Centrar el mapa en la NUEVA ubicación
                     console.log('   🗺️ Centrando mapa en la nueva ubicación...');
-                    trackingMap.setView([data.ubicacion.lat, data.ubicacion.lng], 15);
+                    trackingMap.setView([lat, lng], 16);
+                    console.log('   ✅ Mapa centrado en:', trackingMap.getCenter());
                     
                     // Forzar re-render del mapa
                     setTimeout(() => {
                         if (trackingMap) {
                             trackingMap.invalidateSize();
-                            console.log('   🔄 Mapa re-renderizado');
+                            console.log('   🔄 Mapa re-renderizado y actualizado');
                         }
                     }, 100);
                     
                     // Exponer marcador globalmente para depuración
                     window.trackingMarker = trackingMarker;
+                    window.lastLocationUpdate = {
+                        lat,
+                        lng,
+                        timestamp: data.ubicacion.timestamp,
+                        nombre: data.nombre,
+                        updatedAt: new Date().toISOString()
+                    };
                     
-                    console.log('✅ ========== FIN loadDeliveryLocation - MARCADOR ACTUALIZADO ==========');
+                    console.log('✅ ========== FIN loadDeliveryLocation - MARCADOR ACTUALIZADO EXITOSAMENTE ==========');
+                    console.log('   💾 Última actualización guardada en window.lastLocationUpdate para debug');
                     
                 } else {
                     // No hay ubicación disponible
