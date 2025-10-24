@@ -545,42 +545,6 @@
             color: #e74c3c;
             margin-bottom: 15px;
             line-height: 1.5;
-
-        .btn-update-location {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 10px;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.3s;
-        }
-
-        .btn-update-location:active {
-            transform: scale(0.98);
-        }
-
-        .btn-update-location:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .updating {
-            animation: pulse 1s infinite;
-        }
         }
     </style>
 </head>
@@ -662,11 +626,6 @@
                             <span id="location-status-detail">Actualizado: --:--</span>
                         </div>
                     </div>
-                    
-                    <button id="btn-update-location" class="btn-update-location hidden" onclick="window.forceLocationUpdate()">
-                        <span id="update-icon">🔄</span>
-                        <span id="update-text">Actualizar Ubicación Ahora</span>
-                    </button>
                 </div>
 
                 <div class="status-bar">
@@ -925,28 +884,14 @@
         function requestLocationPermission() {
             return new Promise((resolve, reject) => {
                 if (!navigator.geolocation) {
-                    reject(new Error('Tu navegador no soporta geolocalización. Usa Chrome, Firefox o Safari.'));
+                    reject(new Error('Geolocalización no soportada'));
                     return;
                 }
 
-                // Verificar si estamos en HTTPS o localhost
-                if (location.protocol !== 'https:' && !location.hostname.includes('localhost') && location.hostname !== '127.0.0.1') {
-                    reject(new Error('⚠️ La geolocalización requiere HTTPS. Asegúrate de acceder con https:// en la URL.'));
-                    return;
-                }
-
-                console.log('📍 Solicitando permisos de ubicación...');
-                
                 navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        console.log('✅ Permisos otorgados');
-                        resolve(true);
-                    },
-                    (error) => {
-                        console.error('❌ Error al solicitar permisos:', error);
-                        reject(error);
-                    },
-                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                    () => resolve(true),
+                    (error) => reject(error),
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                 );
             });
         }
@@ -1054,20 +999,20 @@
                         let errorMessage = 'Error al obtener ubicación. ';
                         switch(error.code) {
                             case error.PERMISSION_DENIED:
-                                errorMessage = 'Permisos de ubicación denegados. Por favor, permite el acceso a tu ubicación en la configuración del navegador.';
+                                errorMessage += 'Permisos de ubicación denegados.';
                                 break;
                             case error.POSITION_UNAVAILABLE:
-                                errorMessage = 'Ubicación no disponible. Verifica que el GPS esté activado y que tengas buena señal.';
+                                errorMessage += 'Ubicación no disponible.';
                                 break;
                             case error.TIMEOUT:
-                                errorMessage = 'Tiempo de espera agotado. Intenta nuevamente o ve a un lugar con mejor señal GPS.';
+                                errorMessage += 'Tiempo de espera agotado.';
                                 break;
                             default:
                                 errorMessage += error.message;
                         }
                         reject(new Error(errorMessage));
                     },
-                    { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                 );
             });
         }
@@ -1093,7 +1038,6 @@
                 btn.classList.remove('activate');
                 btn.classList.add('deactivate');
                 btnText.textContent = 'Desactivar Ubicación';
-                document.getElementById('btn-update-location').classList.remove('hidden');
                 btnIcon.textContent = '🛑';
                 indicator.classList.remove('inactive');
                 indicator.classList.add('active');
@@ -1297,7 +1241,6 @@
             document.getElementById('location-indicator').classList.remove('active');
             document.getElementById('location-indicator').classList.add('inactive');
             document.getElementById('location-status').textContent = 'Ubicación desactivada';
-            document.getElementById('btn-update-location').classList.add('hidden');
             
             // Resetear contador
             console.log('   📊 Total de actualizaciones realizadas:', locationUpdateCount);
@@ -1348,86 +1291,6 @@
                         btnIcon.textContent = '📍';
                     }
                 }
-            }
-        };
-
-
-        window.forceLocationUpdate = async function() {
-            console.log('🔄 ========== ACTUALIZACIÓN MANUAL SOLICITADA ==========');
-            
-            const btn = document.getElementById('btn-update-location');
-            const updateIcon = document.getElementById('update-icon');
-            const updateText = document.getElementById('update-text');
-            
-            if (!isLocationActive) {
-                showAlert('⚠️ Primero debes activar la ubicación', 'warning');
-                return;
-            }
-            
-            // Deshabilitar botón durante actualización
-            btn.disabled = true;
-            btn.classList.add('updating');
-            updateIcon.textContent = '⏳';
-            updateText.textContent = 'Actualizando...';
-            
-            try {
-                // Obtener ubicación actual
-                const position = await new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(resolve, reject, {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 0
-                    });
-                });
-                
-                const { latitude, longitude } = position.coords;
-                console.log('📍 Ubicación GPS obtenida:', { latitude, longitude });
-                
-                // Guardar en base de datos
-                const locationData = {
-                    lat: latitude,
-                    lng: longitude,
-                    timestamp: new Date().toISOString()
-                };
-                
-                const { data: updateResult, error } = await supabase
-                    .from('domiciliarios')
-                    .update({ ubicacion: locationData })
-                    .eq('id', currentDelivery.id)
-                    .select();
-                
-                if (error) {
-                    console.error('❌ Error al guardar ubicación:', error);
-                    throw error;
-                }
-                
-                console.log('✅ Ubicación actualizada en BD:', updateResult);
-                
-                // Actualizar contador y UI
-                locationUpdateCount++;
-                const now = new Date();
-                const timeStr = now.toLocaleTimeString('es-CO', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                });
-                
-                document.getElementById('location-status').textContent = 
-                    `Ubicación activa - Actualizado: ${timeStr} (${locationUpdateCount} actualizaciones)`;
-                document.getElementById('location-status-detail').textContent = 
-                    `Actualizado: ${timeStr}`;
-                
-                showAlert('✅ Ubicación actualizada correctamente', 'success');
-                console.log('✅ ========== ACTUALIZACIÓN MANUAL COMPLETADA ==========');
-                
-            } catch (error) {
-                console.error('❌ Error al actualizar ubicación:', error);
-                showAlert('❌ Error al actualizar ubicación: ' + error.message, 'danger');
-            } finally {
-                // Restaurar botón
-                btn.disabled = false;
-                btn.classList.remove('updating');
-                updateIcon.textContent = '🔄';
-                updateText.textContent = 'Actualizar Ubicación Ahora';
             }
         };
 
@@ -1945,61 +1808,6 @@
                 setInterval(loadOrders, 30000);
             }
         });
-
-        // Función de diagnóstico para problemas de ubicación
-        window.diagnosticarUbicacion = async function() {
-            console.log('🔍 ========== DIAGNÓSTICO DE UBICACIÓN ==========');
-            
-            // 1. Verificar navegador
-            console.log('1️⃣ Navegador:', navigator.userAgent);
-            console.log('   - Geolocalización disponible:', 'geolocation' in navigator ? '✅ Sí' : '❌ No');
-            
-            // 2. Verificar protocolo
-            console.log('2️⃣ Protocolo:', location.protocol);
-            console.log('   - Es HTTPS o localhost:', (location.protocol === 'https:' || location.hostname.includes('localhost')) ? '✅ Sí' : '❌ No');
-            
-            // 3. Verificar permisos
-            if ('permissions' in navigator) {
-                try {
-                    const result = await navigator.permissions.query({ name: 'geolocation' });
-                    console.log('3️⃣ Estado de permisos:', result.state);
-                    console.log('   - Granted (Otorgado):', result.state === 'granted' ? '✅' : '❌');
-                    console.log('   - Prompt (Preguntar):', result.state === 'prompt' ? '⚠️' : '✅');
-                    console.log('   - Denied (Denegado):', result.state === 'denied' ? '❌' : '✅');
-                } catch (e) {
-                    console.log('3️⃣ No se pudo verificar estado de permisos');
-                }
-            }
-            
-            // 4. Intentar obtener ubicación
-            console.log('4️⃣ Intentando obtener ubicación de prueba...');
-            try {
-                const position = await new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(resolve, reject, {
-                        enableHighAccuracy: true,
-                        timeout: 5000,
-                        maximumAge: 0
-                    });
-                });
-                console.log('   ✅ Ubicación obtenida exitosamente:', {
-                    lat: position.coords.latitude.toFixed(6),
-                    lng: position.coords.longitude.toFixed(6),
-                    accuracy: Math.round(position.coords.accuracy) + 'm'
-                });
-                showAlert('✅ GPS funcionando correctamente. Latitud: ' + position.coords.latitude.toFixed(6) + ', Longitud: ' + position.coords.longitude.toFixed(6), 'success');
-            } catch (error) {
-                console.log('   ❌ Error al obtener ubicación:', error.message);
-                console.log('   Código de error:', error.code);
-                showAlert('❌ Error: ' + error.message, 'danger');
-            }
-            
-            console.log('✅ ========== FIN DEL DIAGNÓSTICO ==========');
-        };
-
-        // Mensaje de ayuda en consola
-        console.log('🔧 AYUDA: Si tienes problemas con la ubicación, ejecuta en la consola:');
-        console.log('   diagnosticarUbicacion()');
-
     </script>
 </body>
 </html>
