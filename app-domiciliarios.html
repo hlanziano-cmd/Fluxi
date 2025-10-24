@@ -545,6 +545,42 @@
             color: #e74c3c;
             margin-bottom: 15px;
             line-height: 1.5;
+
+        .btn-update-location {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn-update-location:active {
+            transform: scale(0.98);
+        }
+
+        .btn-update-location:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .updating {
+            animation: pulse 1s infinite;
+        }
         }
     </style>
 </head>
@@ -626,6 +662,11 @@
                             <span id="location-status-detail">Actualizado: --:--</span>
                         </div>
                     </div>
+                    
+                    <button id="btn-update-location" class="btn-update-location hidden" onclick="window.forceLocationUpdate()">
+                        <span id="update-icon">🔄</span>
+                        <span id="update-text">Actualizar Ubicación Ahora</span>
+                    </button>
                 </div>
 
                 <div class="status-bar">
@@ -1038,6 +1079,7 @@
                 btn.classList.remove('activate');
                 btn.classList.add('deactivate');
                 btnText.textContent = 'Desactivar Ubicación';
+                document.getElementById('btn-update-location').classList.remove('hidden');
                 btnIcon.textContent = '🛑';
                 indicator.classList.remove('inactive');
                 indicator.classList.add('active');
@@ -1241,6 +1283,7 @@
             document.getElementById('location-indicator').classList.remove('active');
             document.getElementById('location-indicator').classList.add('inactive');
             document.getElementById('location-status').textContent = 'Ubicación desactivada';
+            document.getElementById('btn-update-location').classList.add('hidden');
             
             // Resetear contador
             console.log('   📊 Total de actualizaciones realizadas:', locationUpdateCount);
@@ -1291,6 +1334,86 @@
                         btnIcon.textContent = '📍';
                     }
                 }
+            }
+        };
+
+
+        window.forceLocationUpdate = async function() {
+            console.log('🔄 ========== ACTUALIZACIÓN MANUAL SOLICITADA ==========');
+            
+            const btn = document.getElementById('btn-update-location');
+            const updateIcon = document.getElementById('update-icon');
+            const updateText = document.getElementById('update-text');
+            
+            if (!isLocationActive) {
+                showAlert('⚠️ Primero debes activar la ubicación', 'warning');
+                return;
+            }
+            
+            // Deshabilitar botón durante actualización
+            btn.disabled = true;
+            btn.classList.add('updating');
+            updateIcon.textContent = '⏳';
+            updateText.textContent = 'Actualizando...';
+            
+            try {
+                // Obtener ubicación actual
+                const position = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    });
+                });
+                
+                const { latitude, longitude } = position.coords;
+                console.log('📍 Ubicación GPS obtenida:', { latitude, longitude });
+                
+                // Guardar en base de datos
+                const locationData = {
+                    lat: latitude,
+                    lng: longitude,
+                    timestamp: new Date().toISOString()
+                };
+                
+                const { data: updateResult, error } = await supabase
+                    .from('domiciliarios')
+                    .update({ ubicacion: locationData })
+                    .eq('id', currentDelivery.id)
+                    .select();
+                
+                if (error) {
+                    console.error('❌ Error al guardar ubicación:', error);
+                    throw error;
+                }
+                
+                console.log('✅ Ubicación actualizada en BD:', updateResult);
+                
+                // Actualizar contador y UI
+                locationUpdateCount++;
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('es-CO', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                
+                document.getElementById('location-status').textContent = 
+                    `Ubicación activa - Actualizado: ${timeStr} (${locationUpdateCount} actualizaciones)`;
+                document.getElementById('location-status-detail').textContent = 
+                    `Actualizado: ${timeStr}`;
+                
+                showAlert('✅ Ubicación actualizada correctamente', 'success');
+                console.log('✅ ========== ACTUALIZACIÓN MANUAL COMPLETADA ==========');
+                
+            } catch (error) {
+                console.error('❌ Error al actualizar ubicación:', error);
+                showAlert('❌ Error al actualizar ubicación: ' + error.message, 'danger');
+            } finally {
+                // Restaurar botón
+                btn.disabled = false;
+                btn.classList.remove('updating');
+                updateIcon.textContent = '🔄';
+                updateText.textContent = 'Actualizar Ubicación Ahora';
             }
         };
 
