@@ -478,7 +478,6 @@
                             <tr>
                                 <th>Nombre</th>
                                 <th>Teléfono</th>
-                                <th>Tipo</th>
                                 <th>Estado</th>
                                 <th>Última Ubicación</th>
                                 <th>Acciones</th>
@@ -486,7 +485,7 @@
                         </thead>
                         <tbody id="delivery-table-body">
                             <tr>
-                                <td colspan="6" style="text-align: center; padding: 30px;">Cargando...</td>
+                                <td colspan="5" style="text-align: center; padding: 30px;">Cargando...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -797,18 +796,6 @@
                     <input type="tel" id="delivery-phone" required value="+57" placeholder="+573001234567">
                     <small style="color: #7f8c8d; font-size: 12px;">Formato: +57 seguido del número</small>
                 </div>
-                <div class="form-group">
-                    <label>Tipo de Domiciliario *</label>
-                    <select id="delivery-type" required>
-                        <option value="">Seleccionar...</option>
-                        <option value="propio">Propio</option>
-                        <option value="rappi">Rappi</option>
-                    </select>
-                    <small style="color: #7f8c8d; font-size: 12px;">
-                        • Propio: Domiciliario de la empresa<br>
-                        • Rappi: Domiciliario externo (Rappi, etc.)
-                    </small>
-                </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" id="btn-cancel-delivery">Cancelar</button>
                     <button type="submit" class="btn btn-success">Guardar</button>
@@ -950,7 +937,7 @@
         }
 
         // 🔖 SISTEMA DE VERSIONES Y CONTROL DE CACHÉ
-        const APP_VERSION = '2.1.0'; // ACTUALIZADO: 24-Oct-2024 - Fix tracking de ubicación
+        const APP_VERSION = '2.3.0'; // ACTUALIZADO: 25-Oct-2024 - Fix cálculo de tiempo de entrega
         const VERSION_KEY = 'fluxi_admin_version';
         
         // Verificar versión y detectar caché
@@ -989,9 +976,9 @@
                                 🆕 Nueva Versión ${APP_VERSION}
                             </div>
                             <div style="font-size: 13px; margin-bottom: 15px;">
-                                • Mejorado tracking de ubicación GPS<br>
-                                • Indicadores visuales de frescura<br>
-                                • Actualización final al completar entregas
+                                • Corregido cálculo de tiempo de entrega<br>
+                                • Ahora muestra tiempo desde aceptación hasta entrega<br>
+                                • Pedidos completados muestran tiempo exacto
                             </div>
                             <button onclick="this.parentElement.remove()" style="
                                 background: white;
@@ -1040,11 +1027,11 @@
                 versionInfo.title = 'Haz clic para ver información de versión';
                 versionInfo.onclick = () => {
                     alert(`Fluxi Admin v${APP_VERSION}\n\n` +
-                          `Última actualización: 24-Oct-2024\n\n` +
+                          `Última actualización: 25-Oct-2024\n\n` +
                           `Mejoras en esta versión:\n` +
-                          `• Fix tracking de ubicación GPS\n` +
-                          `• Indicadores visuales de frescura\n` +
-                          `• Actualización final al completar entregas\n\n` +
+                          `• Corregido cálculo de tiempo de entrega\n` +
+                          `• Tiempo desde aceptación hasta entrega\n` +
+                          `• Precisión con segundos en completados\n\n` +
                           `Si ves problemas, presiona Ctrl+Shift+R para recargar sin caché.`);
                 };
                 document.body.appendChild(versionInfo);
@@ -1109,6 +1096,50 @@
             const hours = Math.floor(diff / 3600000);
             const minutes = Math.floor((diff % 3600000) / 60000);
             return hours > 0 ? hours + 'h ' + minutes + 'm' : minutes + 'm';
+        }
+
+        // 🆕 NUEVA FUNCIÓN: Calcular tiempo de entrega correcto
+        function calculateDeliveryTime(order) {
+            // Si no hay tiempo de aceptación, no hay tiempo que mostrar
+            if (!order.tiempo_aceptacion) {
+                return '--';
+            }
+
+            let endTime;
+            
+            // Si el pedido está entregado, usar tiempo_entrega
+            if (order.estado === 'entregado' && order.tiempo_entrega) {
+                endTime = order.tiempo_entrega;
+            } 
+            // Si está en progreso (asignado o en_camino), usar tiempo actual
+            else if (order.estado === 'asignado' || order.estado === 'en_camino') {
+                endTime = Date.now();
+            }
+            // Para estados pendiente o cancelado, no mostrar tiempo
+            else {
+                return '--';
+            }
+
+            // Calcular diferencia
+            const diff = endTime - order.tiempo_aceptacion;
+            const hours = Math.floor(diff / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+
+            // Formato: Para pedidos completados mostrar también segundos
+            if (order.estado === 'entregado') {
+                if (hours > 0) {
+                    return `${hours}h ${minutes}m ${seconds}s`;
+                } else if (minutes > 0) {
+                    return `${minutes}m ${seconds}s`;
+                } else {
+                    return `${seconds}s`;
+                }
+            } 
+            // Para pedidos en progreso, formato simple
+            else {
+                return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+            }
         }
 
         function sendWhatsAppNotification(phone, nombre) {
@@ -1298,42 +1329,36 @@
                 }
                 
                 if (!result.data || result.data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px;">No hay domiciliarios</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px;">No hay domiciliarios</td></tr>';
                     return;
                 }
                 
                 result.data.forEach(delivery => {
                     const row = tbody.insertRow();
-                    row.innerHTML = `<td><strong>${delivery.nombre}</strong></td><td>${delivery.telefono}</td><td></td><td></td><td></td><td class="actions-cell"></td>`;
-                    
-                    // Tipo
-                    const tipoBadge = document.createElement('span');
-                    tipoBadge.className = 'badge ' + (delivery.tipo === 'propio' ? 'badge-primary' : 'badge-info');
-                    tipoBadge.textContent = delivery.tipo === 'propio' ? 'Propio' : delivery.tipo === 'rappi' ? 'Rappi' : 'N/A';
-                    row.cells[2].appendChild(tipoBadge);
+                    row.innerHTML = `<td><strong>${delivery.nombre}</strong></td><td>${delivery.telefono}</td><td></td><td></td><td class="actions-cell"></td>`;
                     
                     // Estado
                     const statusBadge = document.createElement('span');
                     statusBadge.className = 'badge ' + (delivery.estado === 'disponible' ? 'badge-success' : delivery.estado === 'ocupado' ? 'badge-warning' : 'badge-danger');
                     statusBadge.textContent = delivery.estado.charAt(0).toUpperCase() + delivery.estado.slice(1);
-                    row.cells[3].appendChild(statusBadge);
+                    row.cells[2].appendChild(statusBadge);
                     
                     // Ubicación
                     const location = delivery.ubicacion ? new Date(delivery.ubicacion.timestamp).toLocaleString('es-CO') : 'Sin ubicación';
-                    row.cells[4].textContent = location;
-                    row.cells[4].style.fontSize = '12px';
+                    row.cells[3].textContent = location;
+                    row.cells[3].style.fontSize = '12px';
                     
                     const editBtn = document.createElement('button');
                     editBtn.className = 'btn btn-primary btn-small';
                     editBtn.textContent = 'Editar';
                     editBtn.onclick = () => openDeliveryModal(delivery);
-                    row.cells[5].appendChild(editBtn);
+                    row.cells[4].appendChild(editBtn);
                     
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'btn btn-danger btn-small';
                     deleteBtn.textContent = 'Eliminar';
                     deleteBtn.onclick = () => deleteDelivery(delivery.id);
-                    row.cells[5].appendChild(deleteBtn);
+                    row.cells[4].appendChild(deleteBtn);
                     
                     if (delivery.ubicacion && delivery.ubicacion.lat && delivery.ubicacion.lng) {
                         updateMarker(delivery.id, delivery);
@@ -1369,7 +1394,6 @@
             document.getElementById('delivery-modal-title').textContent = delivery ? 'Editar Domiciliario' : 'Nuevo Domiciliario';
             document.getElementById('delivery-name').value = delivery ? delivery.nombre : '';
             document.getElementById('delivery-phone').value = delivery ? delivery.telefono : '+57';
-            document.getElementById('delivery-type').value = delivery ? (delivery.tipo || 'propio') : '';
             document.getElementById('delivery-modal').classList.add('active');
         }
 
@@ -1377,7 +1401,6 @@
             document.getElementById('delivery-modal').classList.remove('active');
             document.getElementById('delivery-form').reset();
             document.getElementById('delivery-phone').value = '+57';
-            document.getElementById('delivery-type').value = '';
             currentDeliveryId = null;
         }
 
@@ -1406,7 +1429,7 @@
             const deliveryData = {
                 nombre: document.getElementById('delivery-name').value,
                 telefono: document.getElementById('delivery-phone').value,
-                tipo: document.getElementById('delivery-type').value,
+                tipo: 'propio', // Valor por defecto
                 estado: 'disponible',
                 updated_at: new Date().toISOString()
             };
@@ -1461,7 +1484,7 @@
                     <td>${order.domiciliario_nombre || 'Sin asignar'}</td>
                     <td>${order.tipo_domiciliario === 'rappi' ? 'N/A' : (order.numero_datafono || '--')}</td>
                     <td></td>
-                    <td>${order.tiempo_aceptacion ? calculateElapsedTime(order.tiempo_aceptacion) : '--'}</td>
+                    <td>${calculateDeliveryTime(order)}</td>
                     <td class="actions-cell"></td>
                 `;
                 
@@ -1579,7 +1602,7 @@
                     // Mostrar estado inicial
                     document.getElementById('tracking-status').className = 'status-badge status-' + order.estado;
                     document.getElementById('tracking-status').textContent = order.estado.charAt(0).toUpperCase() + order.estado.slice(1);
-                    document.getElementById('tracking-time').textContent = order.tiempo_aceptacion ? calculateElapsedTime(order.tiempo_aceptacion) : '--';
+                    document.getElementById('tracking-time').textContent = calculateDeliveryTime(order);
                     document.getElementById('tracking-update-time').textContent = 'Esperando ubicación...';
                     
                     // Cargar ubicación inicial
@@ -1752,13 +1775,8 @@
                     console.log('3️⃣ Actualizando tiempo transcurrido...');
                     const timeSpan = document.getElementById('tracking-time');
                     if (timeSpan) {
-                        if (orderData.tiempo_aceptacion) {
-                            timeSpan.textContent = calculateElapsedTime(orderData.tiempo_aceptacion);
-                            console.log('   ✅ Tiempo actualizado');
-                        } else {
-                            timeSpan.textContent = '--';
-                            console.log('   ℹ️ No hay tiempo de aceptación');
-                        }
+                        timeSpan.textContent = calculateDeliveryTime(orderData);
+                        console.log('   ✅ Tiempo actualizado');
                     } else {
                         console.warn('   ⚠️ Elemento tracking-time no encontrado');
                     }
@@ -2700,7 +2718,7 @@
                     <td>${order.numero_datafono || '--'}</td>
                     <td>${order.metodo_pago === 'efectivo' ? 'Efectivo' : order.metodo_pago === 'tarjeta' ? 'Tarjeta' : '--'}</td>
                     <td></td>
-                    <td>${order.tiempo_aceptacion ? calculateElapsedTime(order.tiempo_aceptacion) : '--'}</td>
+                    <td>${calculateDeliveryTime(order)}</td>
                 `;
                 
                 const statusBadge = document.createElement('span');
