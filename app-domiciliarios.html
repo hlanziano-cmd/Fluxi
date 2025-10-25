@@ -685,7 +685,7 @@
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // 🔖 SISTEMA DE VERSIONES Y CONTROL DE CACHÉ
-        const APP_VERSION = '2.1.0'; // ACTUALIZADO: 24-Oct-2024 - Fix tracking de ubicación
+        const APP_VERSION = '2.2.0'; // ACTUALIZADO: 24-Oct-2024 - Fix tracking + Background support
         const VERSION_KEY = 'fluxi_delivery_version';
         
         // Verificar versión y detectar caché
@@ -701,11 +701,15 @@
                     console.log('%c🆕 NUEVA VERSIÓN DETECTADA', 'color: #27ae60; font-weight: bold; font-size: 13px;');
                     console.log('%c   Versión anterior:', 'color: #95a5a6;', savedVersion);
                     console.log('%c   Versión actual:', 'color: #27ae60;', APP_VERSION);
-                    console.log('%c   ✅ Novedades: Actualización final de ubicación al completar entregas', 'color: #3498db;');
+                    console.log('%c   ✅ Novedades:', 'color: #3498db;');
+                    console.log('%c      • Ubicación se actualiza al completar entregas', 'color: #3498db;');
+                    console.log('%c      • Ubicación NO se activa automáticamente (solo con botón)', 'color: #3498db;');
+                    console.log('%c      • Tracking funciona en segundo plano', 'color: #3498db;');
+                    console.log('%c      • Soporte para Wake Lock (mantiene app activa)', 'color: #3498db;');
                     
                     // Mostrar notificación al usuario
                     setTimeout(() => {
-                        showAlert('🆕 Nueva versión ' + APP_VERSION + ' instalada. Ahora la ubicación se actualiza al completar entregas.', 'success');
+                        showAlert('🆕 Nueva versión ' + APP_VERSION + ' instalada. Ahora soporta tracking en segundo plano y control manual de ubicación.', 'success');
                     }, 2000);
                 }
                 
@@ -731,6 +735,104 @@
         let realtimeChannel = null;
         let isLocationActive = false; // Nueva variable para trackear estado de ubicación
         let locationUpdateCount = 0; // NUEVO: Contador de actualizaciones de ubicación
+        
+        // 🔋 VARIABLES PARA TRACKING EN SEGUNDO PLANO
+        let wakeLock = null; // Para mantener la pantalla activa (opcional)
+        let isAppInBackground = false; // Para detectar si la app está en background
+        let backgroundUpdateCount = 0; // Contador de actualizaciones en background
+
+        // 📱 SISTEMA DE TRACKING EN SEGUNDO PLANO
+        // Configurar listeners para detectar cuando la app va a background/foreground
+        (function setupBackgroundTracking() {
+            console.log('🔧 Configurando sistema de tracking en segundo plano...');
+            
+            // Page Visibility API - detecta cuando la app está oculta/visible
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    console.log('📴 App movida a segundo plano');
+                    isAppInBackground = true;
+                    
+                    if (isLocationActive) {
+                        console.log('📍 Ubicación activa - continuará actualizándose en segundo plano');
+                        showAlert('📍 La app seguirá actualizando tu ubicación en segundo plano', 'info');
+                    }
+                } else {
+                    console.log('📲 App restaurada al primer plano');
+                    isAppInBackground = false;
+                    
+                    if (isLocationActive) {
+                        console.log('✅ Ubicación activa - actualizaciones en segundo plano: ' + backgroundUpdateCount);
+                    }
+                }
+            });
+            
+            // Lifecycle API - para apps en móviles modernos
+            if ('onfreeze' in document) {
+                document.addEventListener('freeze', () => {
+                    console.log('❄️ App congelada por el sistema');
+                    if (isLocationActive) {
+                        console.log('⚠️ La ubicación puede dejar de actualizarse mientras esté congelada');
+                    }
+                });
+                
+                document.addEventListener('resume', () => {
+                    console.log('▶️ App resumida');
+                    if (isLocationActive) {
+                        console.log('🔄 Forzando actualización de ubicación después de resumir...');
+                        updateLocation().catch(err => console.error('Error al actualizar ubicación:', err));
+                    }
+                });
+            }
+            
+            // Detectar cuando el usuario vuelve a la pestaña (focus)
+            window.addEventListener('focus', () => {
+                if (isLocationActive && !document.hidden) {
+                    console.log('👁️ Usuario volvió a la app');
+                }
+            });
+            
+            console.log('✅ Sistema de tracking en segundo plano configurado');
+        })();
+        
+        // 🔋 FUNCIÓN PARA SOLICITAR WAKE LOCK (MANTENER PANTALLA ACTIVA)
+        // Nota: Wake Lock ayuda pero NO es obligatorio. El tracking debe funcionar sin él.
+        async function requestWakeLock() {
+            // Solo intentar si la API está disponible
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    console.log('🔋 Wake Lock activado - la pantalla permanecerá activa');
+                    
+                    wakeLock.addEventListener('release', () => {
+                        console.log('🔋 Wake Lock liberado');
+                        wakeLock = null;
+                    });
+                    
+                    return true;
+                } catch (err) {
+                    console.warn('⚠️ No se pudo activar Wake Lock:', err.message);
+                    console.log('ℹ️ El tracking seguirá funcionando sin Wake Lock');
+                    return false;
+                }
+            } else {
+                console.log('ℹ️ Wake Lock API no disponible en este navegador');
+                return false;
+            }
+        }
+        
+        // 🔓 FUNCIÓN PARA LIBERAR WAKE LOCK
+        function releaseWakeLock() {
+            if (wakeLock) {
+                wakeLock.release()
+                    .then(() => {
+                        console.log('🔋 Wake Lock liberado exitosamente');
+                        wakeLock = null;
+                    })
+                    .catch(err => {
+                        console.warn('⚠️ Error al liberar Wake Lock:', err);
+                    });
+            }
+        }
 
         // Función de debug para verificar estado del sistema de ubicación
         window.checkLocationStatus = function() {
@@ -742,7 +844,10 @@
             console.log('📍 Sistema de ubicación:', isLocationActive ? '✅ ACTIVO' : '❌ INACTIVO');
             console.log('⏱️ Intervalo de actualización:', locationUpdateInterval ? `✅ Corriendo (ID: ${locationUpdateInterval})` : '❌ No está corriendo');
             console.log('👀 WatchPosition:', locationWatchId ? `✅ Activo (ID: ${locationWatchId})` : '❌ No está activo');
+            console.log('🔋 Wake Lock:', wakeLock ? '✅ Activo' : '❌ Inactivo');
+            console.log('📴 App en segundo plano:', isAppInBackground ? '✅ SÍ' : '❌ NO');
             console.log('📊 Total de actualizaciones:', locationUpdateCount);
+            console.log('📊 Actualizaciones en background:', backgroundUpdateCount);
             console.log('🕐 Hora actual:', new Date().toLocaleTimeString('es-CO'));
             console.log('====================================================');
             
@@ -754,13 +859,19 @@
                 console.log('💡 Solución: Desactiva y vuelve a activar la ubicación.');
             } else {
                 console.log('✅ El sistema de ubicación está funcionando correctamente.');
+                if (isAppInBackground) {
+                    console.log('📴 La app está en segundo plano - las actualizaciones continuarán automáticamente');
+                }
             }
             
             return {
                 activo: isLocationActive,
                 intervalo: !!locationUpdateInterval,
                 watchPosition: !!locationWatchId,
-                actualizaciones: locationUpdateCount
+                wakeLock: !!wakeLock,
+                enBackground: isAppInBackground,
+                actualizaciones: locationUpdateCount,
+                actualizacionesBackground: backgroundUpdateCount
             };
         };
         
@@ -1123,13 +1234,30 @@
                 await updateLocation();
                 console.log('✅ Ubicación inicial obtenida exitosamente');
 
-                // Paso 3: Configurar actualizaciones periódicas cada 15 segundos
+                // Paso 3: Intentar activar Wake Lock (opcional, para mejor tracking en background)
+                console.log('🔋 Intentando activar Wake Lock para mejorar tracking en segundo plano...');
+                const wakeLockActivated = await requestWakeLock();
+                if (wakeLockActivated) {
+                    console.log('✅ Wake Lock activado - mejor tracking en segundo plano');
+                } else {
+                    console.log('ℹ️ Wake Lock no disponible - el tracking seguirá funcionando normalmente');
+                }
+
+                // Paso 4: Configurar actualizaciones periódicas cada 15 segundos
                 console.log('⏱️ Configurando actualizaciones automáticas cada 15 segundos...');
                 locationUpdateInterval = setInterval(async () => {
                     try {
-                        console.log('⏰ [INTERVALO] Ejecutando actualización automática...');
+                        const bgStatus = isAppInBackground ? '[BACKGROUND]' : '[FOREGROUND]';
+                        console.log(`⏰ ${bgStatus} [INTERVALO] Ejecutando actualización automática...`);
+                        
                         await updateLocation();
-                        console.log('✅ [INTERVALO] Actualización completada');
+                        
+                        if (isAppInBackground) {
+                            backgroundUpdateCount++;
+                            console.log(`✅ ${bgStatus} [INTERVALO] Actualización completada (${backgroundUpdateCount} en background)`);
+                        } else {
+                            console.log(`✅ ${bgStatus} [INTERVALO] Actualización completada`);
+                        }
                     } catch (error) {
                         console.error('❌ [INTERVALO] Error en actualización periódica:', error);
                     }
@@ -1137,12 +1265,15 @@
 
                 console.log('✅ Intervalo de actualización configurado (ID:', locationUpdateInterval, ')');
 
-                // Paso 4: Configurar watchPosition para actualizaciones EN MOVIMIENTO
+                // Paso 5: Configurar watchPosition para actualizaciones EN MOVIMIENTO
+                // Con opciones optimizadas para funcionar en segundo plano
                 console.log('👀 Configurando watchPosition para actualizaciones continuas...');
                 locationWatchId = navigator.geolocation.watchPosition(
                     async (position) => {
                         try {
-                            console.log('🚶 [WATCHPOSITION] Cambio de posición detectado');
+                            const bgStatus = isAppInBackground ? '[BACKGROUND]' : '[FOREGROUND]';
+                            console.log(`🚶 ${bgStatus} [WATCHPOSITION] Cambio de posición detectado`);
+                            
                             const locationData = {
                                 lat: position.coords.latitude,
                                 lng: position.coords.longitude,
@@ -1152,7 +1283,7 @@
                                 heading: position.coords.heading
                             };
 
-                            console.log('💾 [WATCHPOSITION] Guardando nueva ubicación:', {
+                            console.log(`💾 ${bgStatus} [WATCHPOSITION] Guardando nueva ubicación:`, {
                                 lat: locationData.lat.toFixed(6),
                                 lng: locationData.lng.toFixed(6),
                                 accuracy: Math.round(locationData.accuracy) + 'm'
@@ -1168,41 +1299,50 @@
                                 .select();
 
                             if (error) {
-                                console.error('❌ [WATCHPOSITION] Error al guardar:', error);
+                                console.error(`❌ ${bgStatus} [WATCHPOSITION] Error al guardar:`, error);
                             } else {
-                                console.log('✅ [WATCHPOSITION] Ubicación guardada en BD');
+                                console.log(`✅ ${bgStatus} [WATCHPOSITION] Ubicación guardada en BD`);
                             }
 
                             // Incrementar contador
                             locationUpdateCount++;
+                            if (isAppInBackground) {
+                                backgroundUpdateCount++;
+                            }
 
-                            document.getElementById('location-indicator').classList.add('active');
-                            document.getElementById('location-indicator').classList.remove('inactive');
+                            // Solo actualizar UI si está en foreground
+                            if (!isAppInBackground) {
+                                document.getElementById('location-indicator').classList.add('active');
+                                document.getElementById('location-indicator').classList.remove('inactive');
+                                
+                                const timeStr = new Date().toLocaleTimeString('es-CO', { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit',
+                                    second: '2-digit'
+                                });
+                                
+                                document.getElementById('location-status').textContent = 
+                                    `Ubicación activa - Actualizado: ${timeStr} (${locationUpdateCount} actualizaciones)`;
+                                
+                                // Actualizar UI del control de ubicación
+                                updateLocationUI(true);
+                            }
                             
-                            const timeStr = new Date().toLocaleTimeString('es-CO', { 
-                                hour: '2-digit', 
-                                minute: '2-digit',
-                                second: '2-digit'
-                            });
-                            
-                            document.getElementById('location-status').textContent = 
-                                `Ubicación activa - Actualizado: ${timeStr} (${locationUpdateCount} actualizaciones)`;
-                            
-                            // Actualizar UI del control de ubicación
-                            updateLocationUI(true);
-                            
-                            console.log(`✅ [WATCHPOSITION] Actualización #${locationUpdateCount} completada`);
+                            console.log(`✅ ${bgStatus} [WATCHPOSITION] Actualización #${locationUpdateCount} completada`);
                         } catch (error) {
                             console.error('❌ [WATCHPOSITION] Error:', error);
                         }
                     },
                     (error) => {
                         console.error('❌ [WATCHPOSITION] Error de watchPosition:', error.code, error.message);
-                        showAlert('⚠️ Error continuo de ubicación. Verifica tus permisos.', 'warning');
+                        // No mostrar alert si está en background para no molestar al usuario
+                        if (!isAppInBackground) {
+                            showAlert('⚠️ Error continuo de ubicación. Verifica tus permisos.', 'warning');
+                        }
                     },
                     { 
                         enableHighAccuracy: true,
-                        timeout: 15000,
+                        timeout: 30000, // 30 segundos - más tiempo para background
                         maximumAge: 0
                     }
                 );
@@ -1212,9 +1352,12 @@
                 console.log('📍 Sistema activo con:');
                 console.log('   - Actualización automática cada 15 segundos');
                 console.log('   - WatchPosition para detectar movimiento');
+                console.log('   - Soporte para tracking en segundo plano');
+                console.log('   - Wake Lock:', wakeLock ? 'Activo' : 'No disponible');
                 console.log('   - Total actualizaciones hasta ahora:', locationUpdateCount);
                 
                 isLocationActive = true;
+                backgroundUpdateCount = 0; // Resetear contador de background
                 updateLocationUI(true);
                 return true;
                 
@@ -1282,13 +1425,27 @@
                 console.log('   ℹ️ No había intervalo activo');
             }
             
+            // Liberar Wake Lock si está activo
+            if (wakeLock) {
+                console.log('   🔋 Liberando Wake Lock...');
+                releaseWakeLock();
+                console.log('   ✅ Wake Lock liberado');
+            } else {
+                console.log('   ℹ️ No había Wake Lock activo');
+            }
+            
             document.getElementById('location-indicator').classList.remove('active');
             document.getElementById('location-indicator').classList.add('inactive');
             document.getElementById('location-status').textContent = 'Ubicación desactivada';
             
-            // Resetear contador
+            // Mostrar estadísticas
             console.log('   📊 Total de actualizaciones realizadas:', locationUpdateCount);
+            console.log('   📊 Actualizaciones en segundo plano:', backgroundUpdateCount);
+            console.log('   📊 Actualizaciones en primer plano:', locationUpdateCount - backgroundUpdateCount);
+            
+            // Resetear contadores
             locationUpdateCount = 0;
+            backgroundUpdateCount = 0;
             
             // Actualizar estado y UI
             isLocationActive = false;
@@ -1419,10 +1576,14 @@
                     activeOrder = activeOrders[0];
                     renderActiveOrder(activeOrder);
                     
-                    // Si hay pedido activo y la ubicación no está activa, activarla automáticamente
+                    // ✅ NO ACTIVAR UBICACIÓN AUTOMÁTICAMENTE
+                    // El domiciliario debe activarla manualmente con el botón
                     if (!isLocationActive) {
-                        console.log('🔄 Pedido activo detectado, activando ubicación automáticamente...');
-                        await startLocationTracking();
+                        console.log('ℹ️ Pedido activo detectado. Recuerda activar tu ubicación con el botón verde.');
+                        // Mostrar recordatorio visual si la ubicación no está activa
+                        if (activeOrder.estado === 'asignado' || activeOrder.estado === 'en_camino') {
+                            showAlert('📍 Recuerda activar tu ubicación con el botón verde para que puedan rastrearte.', 'warning');
+                        }
                     }
                 } else {
                     activeOrder = null;
@@ -1880,7 +2041,7 @@
                 versionBadge.textContent = `v${APP_VERSION}`;
                 versionBadge.title = 'Toca para ver información';
                 versionBadge.onclick = () => {
-                    showAlert(`Fluxi Domiciliario v${APP_VERSION}\n\nÚltima actualización: 24-Oct-2024\n\nMejoras: Ubicación GPS al completar entregas`, 'info');
+                    showAlert(`Fluxi Domiciliario v${APP_VERSION}\n\nÚltima actualización: 24-Oct-2024\n\nMejoras v2.2.0:\n• Tracking en segundo plano\n• Control manual de ubicación\n• Ubicación al completar entregas`, 'info');
                 };
                 document.body.appendChild(versionBadge);
             }, 1000);
