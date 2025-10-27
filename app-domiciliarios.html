@@ -1471,7 +1471,9 @@
             } else {
                 // Activar ubicación
                 btn.disabled = true;
-                btn.textContent = 'Activando...';
+                const btnText = document.getElementById('location-btn-text');
+                const btnIcon = document.getElementById('location-btn-icon');
+                btnText.textContent = 'Activando...';
                 
                 try {
                     const success = await startLocationTracking();
@@ -1482,8 +1484,6 @@
                     showAlert('❌ Error al activar ubicación: ' + error.message, 'danger');
                 } finally {
                     btn.disabled = false;
-                    const btnText = document.getElementById('location-btn-text');
-                    const btnIcon = document.getElementById('location-btn-icon');
                     if (isLocationActive) {
                         btnText.textContent = 'Desactivar Ubicación';
                         btnIcon.textContent = '🛑';
@@ -1867,6 +1867,13 @@
         window.startDelivery = async function(orderId) {
             console.log('🚀 ========== INICIANDO ENTREGA ==========');
             console.log('   - Pedido ID:', orderId);
+            
+            // 🔒 VALIDACIÓN: Verificar que la ubicación esté activa
+            if (!isLocationActive) {
+                console.warn('⚠️ Intento de iniciar entrega sin ubicación activa');
+                showAlert('⚠️ Debes tener la ubicación activada para iniciar la entrega. Por favor activa tu ubicación primero.', 'warning');
+                return;
+            }
             
             // Deshabilitar botones temporalmente
             const buttons = document.querySelectorAll('button');
