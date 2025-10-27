@@ -270,6 +270,22 @@
             max-height: 90vh;
             overflow-y: auto;
         }
+        
+        /* Estilos específicos para el modal de seguimiento */
+        #tracking-modal .modal-content {
+            max-height: 95vh;
+            overflow-y: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #tracking-modal .modal-header {
+            flex-shrink: 0;
+        }
+        
+        #tracking-map {
+            flex-shrink: 0;
+        }
 
         .modal-header {
             margin-bottom: 20px;
@@ -430,7 +446,7 @@
         <div class="menu-item active" data-module="usuarios">👥 Gestión de Usuarios</div>
         <div class="menu-item" data-module="domiciliarios">🏍️ Domiciliarios</div>
         <div class="menu-item" data-module="pedidos">📦 Pedidos</div>
-        <div class="menu-item" data-module="dashboard">📊 Dashboard</div>
+        <div class="menu-item" data-module="dashboard">📊 Reportes</div>
         <div class="menu-item" data-module="configuracion">⚙️ Configuración</div>
     </div>
 
@@ -513,16 +529,38 @@
                     <button class="btn btn-primary" id="btn-new-order">+ Nuevo Pedido</button>
                 </div>
                 <div id="orders-alert"></div>
-                <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
-                    <select id="filter-status" style="padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
-                        <option value="">Todos los estados</option>
-                        <option value="pendiente">Pendiente</option>
-                        <option value="asignado">Asignado</option>
-                        <option value="en_camino">En camino</option>
-                        <option value="entregado">Entregado</option>
-                        <option value="cancelado">Cancelado</option>
-                    </select>
-                    <button class="btn btn-secondary btn-small" id="btn-refresh-orders">🔄 Actualizar</button>
+                
+                <!-- Panel de Filtros -->
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 10px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="font-size: 12px; margin-bottom: 3px;">Fecha Desde</label>
+                            <input type="date" id="orders-filter-date-from" style="padding: 8px; border: 1px solid #ddd; border-radius: 5px; width: 100%; font-size: 14px;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="font-size: 12px; margin-bottom: 3px;">Fecha Hasta</label>
+                            <input type="date" id="orders-filter-date-to" style="padding: 8px; border: 1px solid #ddd; border-radius: 5px; width: 100%; font-size: 14px;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="font-size: 12px; margin-bottom: 3px;">Estado</label>
+                            <select id="filter-status" style="padding: 8px; border: 1px solid #ddd; border-radius: 5px; width: 100%; font-size: 14px;">
+                                <option value="">Todos los estados</option>
+                                <option value="pendiente">Pendiente</option>
+                                <option value="asignado">Asignado</option>
+                                <option value="en_camino">En camino</option>
+                                <option value="entregado">Entregado</option>
+                                <option value="cancelado">Cancelado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="btn btn-primary btn-small" id="btn-filter-today">📅 Pedidos de Hoy</button>
+                        <button class="btn btn-info btn-small" id="btn-apply-orders-filters">🔍 Aplicar Filtros</button>
+                        <button class="btn btn-secondary btn-small" id="btn-clear-orders-filters">🗑️ Limpiar</button>
+                        <button class="btn btn-secondary btn-small" id="btn-refresh-orders">🔄 Actualizar</button>
+                        <div style="flex: 1;"></div>
+                        <span id="orders-count-display" style="align-self: center; color: #666; font-size: 14px; font-weight: 500;"></span>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table>
@@ -885,23 +923,23 @@
     <!-- Modal Tracking -->
     <div id="tracking-modal" class="modal">
         <div class="modal-content" style="max-width: 800px;">
-            <div class="modal-header">
-                <h3>🗺 Seguimiento del Pedido</h3>
-                <button type="button" class="btn btn-info btn-small" id="btn-refresh-tracking" style="margin-left: auto;">
-                    🔄 Actualizar
-                </button>
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0;">🗺 Seguimiento del Pedido</h3>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-info btn-small" id="btn-refresh-tracking">
+                        🔄 Actualizar
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-small" id="btn-close-tracking">✕ Cerrar</button>
+                </div>
             </div>
-            <div id="tracking-info" style="margin-bottom: 20px;"></div>
-            <div id="tracking-map" style="height: 400px; border-radius: 8px; margin-bottom: 15px;"></div>
-            <div style="display: flex; gap: 10px; justify-content: space-between; align-items: center; padding: 15px; background: #f8f9fa; border-radius: 5px; margin-bottom: 15px;">
+            <div id="tracking-info" style="margin-bottom: 15px;"></div>
+            <div id="tracking-map" style="height: 300px; border-radius: 8px; margin-bottom: 15px;"></div>
+            <div style="display: flex; gap: 10px; justify-content: space-between; align-items: center; padding: 12px; background: #f8f9fa; border-radius: 5px; margin-bottom: 10px;">
                 <div><strong>Estado:</strong> <span id="tracking-status" class="status-badge">--</span></div>
                 <div><strong>Tiempo transcurrido:</strong> <span id="tracking-time">--</span></div>
             </div>
-            <div id="tracking-last-update" style="text-align: center; font-size: 12px; color: #666; margin-bottom: 15px;">
+            <div id="tracking-last-update" style="text-align: center; font-size: 12px; color: #666;">
                 🕒 Última actualización: <span id="tracking-update-time">--</span>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="btn-close-tracking">Cerrar</button>
             </div>
         </div>
     </div>
@@ -1096,6 +1134,20 @@
             const hours = Math.floor(diff / 3600000);
             const minutes = Math.floor((diff % 3600000) / 60000);
             return hours > 0 ? hours + 'h ' + minutes + 'm' : minutes + 'm';
+        }
+        
+        // 🆕 Función para convertir string de fecha a Date en zona horaria local
+        function parseLocalDate(dateString) {
+            if (!dateString) return null;
+            const [year, month, day] = dateString.split('-');
+            return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        }
+        
+        // 🆕 Función para formatear fecha localmente (sin problemas de zona horaria)
+        function formatLocalDate(dateString, options) {
+            if (!dateString) return '';
+            const date = parseLocalDate(dateString);
+            return date.toLocaleDateString('es-CO', options);
         }
 
         // 🆕 NUEVA FUNCIÓN: Calcular tiempo de entrega correcto
@@ -1459,7 +1511,10 @@
             try {
                 const result = await supabase.from('pedidos').select('*').order('created_at', { ascending: false });
                 allOrders = result.data || [];
-                renderOrders(allOrders);
+                console.log(`📦 Pedidos cargados: ${allOrders.length}`);
+                
+                // Aplicar filtros actuales (si los hay)
+                filterOrders();
             } catch (error) {
                 console.error('Error:', error);
             }
@@ -1525,8 +1580,134 @@
 
         function filterOrders() {
             const status = document.getElementById('filter-status').value;
-            const filtered = status ? allOrders.filter(o => o.estado === status) : allOrders;
+            const dateFrom = document.getElementById('orders-filter-date-from').value;
+            const dateTo = document.getElementById('orders-filter-date-to').value;
+            
+            console.log('🔍 Filtrando pedidos:', { 
+                status, 
+                dateFrom, 
+                dateTo, 
+                totalOrders: allOrders.length 
+            });
+            
+            let filtered = allOrders;
+            
+            // Filtro por fecha desde
+            if (dateFrom) {
+                // ✅ Usar parseLocalDate para evitar problemas de zona horaria
+                const fromDate = parseLocalDate(dateFrom);
+                fromDate.setHours(0, 0, 0, 0);
+                console.log('📅 Filtrando desde:', fromDate.toLocaleString('es-CO'));
+                
+                filtered = filtered.filter(o => {
+                    const orderDate = new Date(o.created_at);
+                    const match = orderDate >= fromDate;
+                    if (!match && filtered.length < 3) {
+                        console.log(`   ❌ Excluido: ${o.cliente} - ${orderDate.toLocaleString('es-CO')}`);
+                    }
+                    return match;
+                });
+                console.log(`📅 Después de filtrar desde ${dateFrom}: ${filtered.length} pedidos`);
+            }
+            
+            // Filtro por fecha hasta
+            if (dateTo) {
+                // ✅ Usar parseLocalDate para evitar problemas de zona horaria
+                const toDate = parseLocalDate(dateTo);
+                toDate.setHours(23, 59, 59, 999);
+                console.log('📅 Filtrando hasta:', toDate.toLocaleString('es-CO'));
+                
+                filtered = filtered.filter(o => {
+                    const orderDate = new Date(o.created_at);
+                    const match = orderDate <= toDate;
+                    if (!match && filtered.length < 3) {
+                        console.log(`   ❌ Excluido: ${o.cliente} - ${orderDate.toLocaleString('es-CO')}`);
+                    }
+                    return match;
+                });
+                console.log(`📅 Después de filtrar hasta ${dateTo}: ${filtered.length} pedidos`);
+            }
+            
+            // Filtro por estado
+            if (status) {
+                filtered = filtered.filter(o => o.estado === status);
+                console.log(`📊 Después de filtrar por estado ${status}: ${filtered.length} pedidos`);
+            }
+            
+            console.log(`✅ Total filtrado: ${filtered.length} de ${allOrders.length} pedidos`);
+            
+            // Actualizar contador
+            updateOrdersCount(filtered.length, allOrders.length);
+            
             renderOrders(filtered);
+        }
+        
+        // Función para actualizar el contador de pedidos
+        function updateOrdersCount(filtered, total) {
+            const display = document.getElementById('orders-count-display');
+            const dateFrom = document.getElementById('orders-filter-date-from').value;
+            const dateTo = document.getElementById('orders-filter-date-to').value;
+            const status = document.getElementById('filter-status').value;
+            
+            let text = '';
+            
+            if (filtered === total) {
+                text = `📦 ${total} pedido${total !== 1 ? 's' : ''} total${total !== 1 ? 'es' : ''}`;
+            } else {
+                text = `📦 ${filtered} de ${total} pedidos`;
+                
+                // Agregar información de filtros activos
+                const filters = [];
+                if (dateFrom && dateTo) {
+                    const fromDate = formatLocalDate(dateFrom, { month: 'short', day: 'numeric' });
+                    const toDate = formatLocalDate(dateTo, { month: 'short', day: 'numeric' });
+                    if (dateFrom === dateTo) {
+                        filters.push(`📅 ${fromDate}`);
+                    } else {
+                        filters.push(`📅 ${fromDate} - ${toDate}`);
+                    }
+                } else if (dateFrom) {
+                    filters.push(`📅 Desde ${formatLocalDate(dateFrom, { month: 'short', day: 'numeric' })}`);
+                } else if (dateTo) {
+                    filters.push(`📅 Hasta ${formatLocalDate(dateTo, { month: 'short', day: 'numeric' })}`);
+                }
+                
+                if (status) {
+                    const statusText = status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
+                    filters.push(`📊 ${statusText}`);
+                }
+                
+                if (filters.length > 0) {
+                    text += ` (${filters.join(', ')})`;
+                }
+            }
+            
+            display.textContent = text;
+            display.style.color = filtered < total ? '#2c3e50' : '#666';
+            display.style.fontWeight = filtered < total ? '600' : '500';
+        }
+        
+        // Función para filtrar pedidos de hoy
+        function filterTodayOrders() {
+            const today = new Date();
+            const dateString = today.toISOString().split('T')[0];
+            
+            document.getElementById('orders-filter-date-from').value = dateString;
+            document.getElementById('orders-filter-date-to').value = dateString;
+            document.getElementById('filter-status').value = '';
+            
+            console.log('📅 Filtrando pedidos de hoy:', dateString);
+            filterOrders();
+        }
+        
+        // Función para limpiar filtros de pedidos
+        function clearOrdersFilters() {
+            document.getElementById('orders-filter-date-from').value = '';
+            document.getElementById('orders-filter-date-to').value = '';
+            document.getElementById('filter-status').value = '';
+            
+            console.log('🗑️ Filtros limpiados');
+            filterOrders();
         }
 
         async function changeOrderStatus(orderId, newStatus) {
@@ -2202,6 +2383,24 @@
             }
         });
         document.getElementById('filter-status').addEventListener('change', filterOrders);
+        
+        // Event listeners para filtros de fecha en pedidos
+        document.getElementById('btn-filter-today').addEventListener('click', filterTodayOrders);
+        document.getElementById('btn-apply-orders-filters').addEventListener('click', filterOrders);
+        document.getElementById('btn-clear-orders-filters').addEventListener('click', clearOrdersFilters);
+        document.getElementById('orders-filter-date-from').addEventListener('change', () => {
+            // Auto-aplicar filtro al cambiar fecha
+            if (document.getElementById('orders-filter-date-to').value) {
+                filterOrders();
+            }
+        });
+        document.getElementById('orders-filter-date-to').addEventListener('change', () => {
+            // Auto-aplicar filtro al cambiar fecha
+            if (document.getElementById('orders-filter-date-from').value) {
+                filterOrders();
+            }
+        });
+        
         document.getElementById('order-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeOrderModal(); });
         document.getElementById('tracking-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeTrackingModal(); });
 
@@ -2305,7 +2504,7 @@
                 
                 // Cargar datafonos únicos
                 const ordersResult = await supabase.from('pedidos').select('numero_datafono');
-                const dataphones = [...new Set(ordersResult.data?.map(o => o.numero_datafono).filter(d => d))];
+                const dataphones = [...new Set(ordersResult.data?.map(o => o.numero_datafono).filter(d => d))].sort();
                 const dataphoneSelect = document.getElementById('filter-dataphone');
                 dataphoneSelect.innerHTML = '<option value="">Todos</option>';
                 dataphones.forEach(d => {
@@ -2329,45 +2528,65 @@
             const dataphone = document.getElementById('filter-dataphone').value;
             const paymentMethod = document.getElementById('filter-payment-method').value;
             
+            console.log('🔍 Filtros aplicados:', {
+                dateFrom, dateTo, deliveryType, deliveryPerson, dataphone, paymentMethod,
+                totalOrders: orders.length
+            });
+            
             let filtered = orders;
             
             // Filtro por rango de fechas
             if (dateFrom) {
-                const fromDate = new Date(dateFrom);
+                // ✅ Usar parseLocalDate para evitar problemas de zona horaria
+                const fromDate = parseLocalDate(dateFrom);
                 fromDate.setHours(0, 0, 0, 0);
+                console.log('📅 Filtrando desde:', fromDate.toLocaleString('es-CO'));
                 filtered = filtered.filter(o => new Date(o.created_at) >= fromDate);
+                console.log(`📅 Después de filtrar desde ${dateFrom}: ${filtered.length} pedidos`);
             }
             
             if (dateTo) {
-                const toDate = new Date(dateTo);
+                // ✅ Usar parseLocalDate para evitar problemas de zona horaria
+                const toDate = parseLocalDate(dateTo);
                 toDate.setHours(23, 59, 59, 999);
+                console.log('📅 Filtrando hasta:', toDate.toLocaleString('es-CO'));
                 filtered = filtered.filter(o => new Date(o.created_at) <= toDate);
+                console.log(`📅 Después de filtrar hasta ${dateTo}: ${filtered.length} pedidos`);
             }
             
             // Filtro por tipo de domiciliario
             if (deliveryType) {
-                filtered = filtered.filter(o => o.tipo_domiciliario === deliveryType);
+                if (deliveryType === 'rappi') {
+                    filtered = filtered.filter(o => o.tipo_domiciliario === 'rappi' || o.domiciliario_nombre === 'Rappi');
+                } else {
+                    filtered = filtered.filter(o => o.tipo_domiciliario === deliveryType);
+                }
+                console.log(`🏍️ Después de filtrar por tipo ${deliveryType}: ${filtered.length} pedidos`);
             }
             
             // Filtro por domiciliario
             if (deliveryPerson) {
                 if (deliveryPerson === 'rappi') {
-                    filtered = filtered.filter(o => o.domiciliario_nombre === 'Rappi');
+                    filtered = filtered.filter(o => o.domiciliario_nombre === 'Rappi' || o.tipo_domiciliario === 'rappi');
                 } else {
                     filtered = filtered.filter(o => o.domiciliario_id === deliveryPerson);
                 }
+                console.log(`👤 Después de filtrar por domiciliario: ${filtered.length} pedidos`);
             }
             
             // Filtro por datafono
             if (dataphone) {
-                filtered = filtered.filter(o => o.numero_datafono == dataphone);
+                filtered = filtered.filter(o => o.numero_datafono === dataphone);
+                console.log(`📱 Después de filtrar por datafono ${dataphone}: ${filtered.length} pedidos`);
             }
             
             // Filtro por método de pago
             if (paymentMethod) {
                 filtered = filtered.filter(o => o.metodo_pago === paymentMethod);
+                console.log(`💳 Después de filtrar por método ${paymentMethod}: ${filtered.length} pedidos`);
             }
             
+            console.log(`✅ Total filtrado: ${filtered.length} de ${orders.length} pedidos`);
             return filtered;
         }
         
@@ -2378,14 +2597,14 @@
             const display = document.getElementById('date-range-display');
             
             if (dateFrom && dateTo) {
-                const fromFormatted = new Date(dateFrom).toLocaleDateString('es-CO');
-                const toFormatted = new Date(dateTo).toLocaleDateString('es-CO');
+                const fromFormatted = formatLocalDate(dateFrom, { year: 'numeric', month: 'long', day: 'numeric' });
+                const toFormatted = formatLocalDate(dateTo, { year: 'numeric', month: 'long', day: 'numeric' });
                 display.textContent = `Mostrando pedidos desde ${fromFormatted} hasta ${toFormatted}`;
             } else if (dateFrom) {
-                const fromFormatted = new Date(dateFrom).toLocaleDateString('es-CO');
+                const fromFormatted = formatLocalDate(dateFrom, { year: 'numeric', month: 'long', day: 'numeric' });
                 display.textContent = `Mostrando pedidos desde ${fromFormatted}`;
             } else if (dateTo) {
-                const toFormatted = new Date(dateTo).toLocaleDateString('es-CO');
+                const toFormatted = formatLocalDate(dateTo, { year: 'numeric', month: 'long', day: 'numeric' });
                 display.textContent = `Mostrando pedidos hasta ${toFormatted}`;
             } else {
                 display.textContent = 'Mostrando todos los pedidos';
@@ -2410,13 +2629,17 @@
                 const deliveredOrders = filteredOrders.filter(o => 
                     o.estado === 'entregado' && o.tiempo_aceptacion && o.tiempo_entrega
                 );
-                let avgTime = '--';
+                let avgTime = '0m';
                 if (deliveredOrders.length > 0) {
                     const totalTime = deliveredOrders.reduce((sum, o) => 
                         sum + (o.tiempo_entrega - o.tiempo_aceptacion), 0
                     );
                     const avgMinutes = Math.round((totalTime / deliveredOrders.length) / 60000);
-                    avgTime = Math.floor(avgMinutes / 60) + 'h ' + (avgMinutes % 60) + 'm';
+                    if (avgMinutes >= 60) {
+                        avgTime = Math.floor(avgMinutes / 60) + 'h ' + (avgMinutes % 60) + 'm';
+                    } else {
+                        avgTime = avgMinutes + 'm';
+                    }
                 }
                 
                 // Actualizar métricas en el DOM
@@ -2604,75 +2827,240 @@
             let days = [];
             const incomeByDay = {};
             
+            console.log('📊 Generando gráfica de ingresos:', { dateFrom, dateTo, totalOrders: orders.length });
+            
             if (dateFrom && dateTo) {
-                // Si hay rango definido, usar ese rango
-                const startDate = new Date(dateFrom);
-                const endDate = new Date(dateTo);
+                // ✅ Si hay rango definido, usar ese rango con parseLocalDate
+                const startDate = parseLocalDate(dateFrom);
+                const endDate = parseLocalDate(dateTo);
                 const diffTime = Math.abs(endDate - startDate);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                console.log(`📅 Rango: ${diffDays + 1} días (desde ${startDate.toLocaleDateString('es-CO')} hasta ${endDate.toLocaleDateString('es-CO')})`);
+                
+                // Generar días del rango
+                for (let i = 0; i <= diffDays; i++) {
+                    const date = new Date(startDate);
+                    date.setDate(startDate.getDate() + i);
+                    const key = date.toISOString().split('T')[0];
+                    
+                    // Formato de label según el tamaño del rango
+                    let label;
+                    if (diffDays <= 7) {
+                        // Rango corto: mostrar día de la semana
+                        label = date.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric' });
+                    } else if (diffDays <= 31) {
+                        // Rango mediano: mostrar día y mes
+                        label = date.toLocaleDateString('es-CO', { month: 'short', day: 'numeric' });
+                    } else {
+                        // Rango largo: mostrar solo día/mes, espaciado
+                        // Para evitar saturar el gráfico, mostrar solo cada 3 días
+                        if (i % 3 === 0 || i === diffDays) {
+                            label = date.toLocaleDateString('es-CO', { month: 'short', day: 'numeric' });
+                        } else {
+                            label = ''; // Etiqueta vacía pero mantener el dato
+                        }
+                    }
+                    
+                    days.push({ key, label, fullDate: date.toLocaleDateString('es-CO', { month: 'short', day: 'numeric' }) });
+                    incomeByDay[key] = 0;
+                }
+            } else if (dateFrom) {
+                // ✅ Si solo hay fecha desde, mostrar desde esa fecha hasta hoy
+                const startDate = parseLocalDate(dateFrom);
+                const endDate = new Date();
+                const diffTime = Math.abs(endDate - startDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                console.log(`📅 Desde ${startDate.toLocaleDateString('es-CO')} hasta hoy (${diffDays + 1} días)`);
                 
                 for (let i = 0; i <= diffDays; i++) {
                     const date = new Date(startDate);
                     date.setDate(startDate.getDate() + i);
                     const key = date.toISOString().split('T')[0];
                     const label = date.toLocaleDateString('es-CO', { month: 'short', day: 'numeric' });
-                    days.push({ key, label });
+                    days.push({ key, label, fullDate: label });
+                    incomeByDay[key] = 0;
+                }
+            } else if (dateTo) {
+                // ✅ Si solo hay fecha hasta, mostrar últimos 7 días hasta esa fecha
+                const endDate = parseLocalDate(dateTo);
+                const startDate = new Date(endDate);
+                startDate.setDate(endDate.getDate() - 6);
+                
+                console.log(`📅 Últimos 7 días hasta ${endDate.toLocaleDateString('es-CO')}`);
+                
+                for (let i = 0; i <= 6; i++) {
+                    const date = new Date(startDate);
+                    date.setDate(startDate.getDate() + i);
+                    const key = date.toISOString().split('T')[0];
+                    const label = date.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric' });
+                    days.push({ key, label, fullDate: date.toLocaleDateString('es-CO', { month: 'short', day: 'numeric' }) });
                     incomeByDay[key] = 0;
                 }
             } else {
                 // Sin rango, mostrar últimos 7 días
+                console.log('📅 Sin filtros: mostrando últimos 7 días');
+                
                 for (let i = 6; i >= 0; i--) {
                     const date = new Date();
                     date.setDate(date.getDate() - i);
                     const key = date.toISOString().split('T')[0];
                     const label = date.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric' });
-                    days.push({ key, label });
+                    days.push({ key, label, fullDate: date.toLocaleDateString('es-CO', { month: 'short', day: 'numeric' }) });
                     incomeByDay[key] = 0;
                 }
             }
             
+            // Calcular ingresos por día y por estado
+            const stateColors = {
+                pendiente: { bg: 'rgba(243, 156, 18, 0.7)', border: '#f39c12' },
+                asignado: { bg: 'rgba(52, 152, 219, 0.7)', border: '#3498db' },
+                en_camino: { bg: 'rgba(46, 204, 113, 0.7)', border: '#2ecc71' },
+                entregado: { bg: 'rgba(39, 174, 96, 0.7)', border: '#27ae60' },
+                cancelado: { bg: 'rgba(231, 76, 60, 0.7)', border: '#e74c3c' }
+            };
+            
+            const stateLabels = {
+                pendiente: 'Pendiente',
+                asignado: 'Asignado',
+                en_camino: 'En Camino',
+                entregado: 'Entregado',
+                cancelado: 'Cancelado'
+            };
+            
+            // Inicializar estructura de datos por día y estado
+            days.forEach(day => {
+                incomeByDay[day.key] = {
+                    pendiente: 0,
+                    asignado: 0,
+                    en_camino: 0,
+                    entregado: 0,
+                    cancelado: 0
+                };
+            });
+            
+            // Calcular ingresos por día y por estado
             orders.forEach(o => {
-                if (o.created_at) {
+                if (o.created_at && o.estado) {
                     const key = new Date(o.created_at).toISOString().split('T')[0];
-                    if (incomeByDay[key] !== undefined) {
-                        incomeByDay[key] += (o.valor_pedido || 0) + (o.valor_domicilio || 0);
+                    if (incomeByDay[key] !== undefined && incomeByDay[key][o.estado] !== undefined) {
+                        incomeByDay[key][o.estado] += (o.valor_pedido || 0) + (o.valor_domicilio || 0);
                     }
                 }
             });
+            
+            // Contar días con datos y calcular totales por estado
+            let daysWithData = 0;
+            let totalIncome = 0;
+            const totalByState = {
+                pendiente: 0,
+                asignado: 0,
+                en_camino: 0,
+                entregado: 0,
+                cancelado: 0
+            };
+            
+            Object.values(incomeByDay).forEach(dayData => {
+                const dayTotal = Object.values(dayData).reduce((sum, v) => sum + v, 0);
+                if (dayTotal > 0) daysWithData++;
+                totalIncome += dayTotal;
+                
+                Object.keys(dayData).forEach(state => {
+                    totalByState[state] += dayData[state];
+                });
+            });
+            
+            console.log(`💰 ${daysWithData} días con ingresos. Total: ${formatCurrency(totalIncome)}`);
+            console.log('📊 Por estado:', Object.keys(totalByState).map(state => 
+                `${stateLabels[state]}: ${formatCurrency(totalByState[state])}`
+            ).join(', '));
             
             const ctx = document.getElementById('income-chart');
             if (incomeChart) incomeChart.destroy();
             
             // Verificar si hay datos
-            const hasData = Object.values(incomeByDay).some(value => value > 0);
+            const hasData = totalIncome > 0;
+            
+            // Crear datasets para cada estado (solo los que tienen datos)
+            const datasets = [];
+            Object.keys(stateColors).forEach(state => {
+                if (totalByState[state] > 0) {
+                    datasets.push({
+                        label: stateLabels[state],
+                        data: days.map(d => incomeByDay[d.key][state]),
+                        backgroundColor: stateColors[state].bg,
+                        borderColor: stateColors[state].border,
+                        borderWidth: 1
+                    });
+                }
+            });
+            
+            // Si no hay datos, mostrar barra vacía
+            if (datasets.length === 0) {
+                datasets.push({
+                    label: 'Sin datos',
+                    data: days.map(() => 0),
+                    backgroundColor: 'rgba(236, 240, 241, 0.6)',
+                    borderColor: '#bdc3c7',
+                    borderWidth: 1
+                });
+            }
             
             incomeChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: days.map(d => d.label),
-                    datasets: [{
-                        label: 'Ingresos Totales',
-                        data: days.map(d => incomeByDay[d.key]),
-                        backgroundColor: hasData ? 'rgba(52, 152, 219, 0.6)' : 'rgba(236, 240, 241, 0.6)',
-                        borderColor: hasData ? '#3498db' : '#bdc3c7',
-                        borderWidth: 2
-                    }]
+                    labels: days.map(d => d.label || ''),
+                    datasets: datasets
                 },
                 options: { 
-                    responsive: true, 
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
                     plugins: { 
-                        legend: { display: false },
+                        legend: { 
+                            display: hasData,
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
                         tooltip: {
                             enabled: hasData,
                             callbacks: {
                                 label: function(context) {
-                                    return formatCurrency(context.parsed.y);
+                                    const label = context.dataset.label || '';
+                                    const value = context.parsed.y;
+                                    return `${label}: ${formatCurrency(value)}`;
+                                },
+                                title: function(context) {
+                                    // Mostrar la fecha completa en el tooltip
+                                    const index = context[0].dataIndex;
+                                    return days[index].fullDate;
+                                },
+                                footer: function(context) {
+                                    // Calcular y mostrar el total del día
+                                    let total = 0;
+                                    context.forEach(item => {
+                                        total += item.parsed.y;
+                                    });
+                                    return total > 0 ? `Total: ${formatCurrency(total)}` : '';
                                 }
                             }
                         }
                     },
                     scales: {
+                        x: {
+                            stacked: true
+                        },
                         y: {
+                            stacked: true,
                             beginAtZero: true,
                             ticks: {
                                 callback: function(value) {
