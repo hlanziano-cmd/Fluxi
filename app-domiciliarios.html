@@ -727,23 +727,49 @@
                     return;
                 }
 
-                // Agregar el prefijo +57
-                const phoneWithPrefix = '+57' + phone;
-                console.log('📞 Buscando teléfono:', phoneWithPrefix);
+                // Intentar buscar con diferentes formatos
+                const phoneFormats = [
+                    phone,              // Sin prefijo: 3001234567
+                    '+57' + phone,      // Con +57: +573001234567
+                    '57' + phone        // Con 57: 573001234567
+                ];
 
-                const { data, error } = await supabase
-                    .from('domiciliarios')
-                    .select('*')
-                    .eq('telefono', phoneWithPrefix)
-                    .maybeSingle();
+                console.log('📞 Buscando teléfono en formatos:', phoneFormats);
 
-                if (error) throw error;
+                let data = null;
+                let error = null;
+
+                // Intentar con cada formato
+                for (const phoneFormat of phoneFormats) {
+                    console.log('🔍 Intentando con:', phoneFormat);
+                    
+                    const result = await supabase
+                        .from('domiciliarios')
+                        .select('*')
+                        .eq('telefono', phoneFormat)
+                        .maybeSingle();
+
+                    if (result.data) {
+                        data = result.data;
+                        console.log('✅ Encontrado con formato:', phoneFormat);
+                        break;
+                    }
+                    
+                    error = result.error;
+                }
+
+                if (error && !data) throw error;
 
                 if (!data) {
                     phoneInput.classList.add('error');
                     showAlert('❌ Domiciliario no encontrado. Verifica tu número.', 'danger');
+                    console.log('❌ No se encontró el número en ningún formato');
+                    console.log('💡 TIP: Verifica que el número esté registrado en la base de datos');
+                    console.log('💡 Formatos buscados:', phoneFormats);
                     return;
                 }
+
+                console.log('✅ Domiciliario encontrado:', data.nombre, '- Teléfono en BD:', data.telefono);
 
                 currentDelivery = data;
                 localStorage.setItem('fluxi_delivery', JSON.stringify(data));
@@ -1543,6 +1569,40 @@
             };
         };
 
+        // 📞 NUEVA: Función para verificar domiciliarios registrados
+        window.checkRegisteredDeliveries = async function() {
+            console.log('📞 ========== DOMICILIARIOS REGISTRADOS ==========');
+            try {
+                const { data, error } = await supabase
+                    .from('domiciliarios')
+                    .select('id, nombre, telefono, estado');
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    console.log('❌ No hay domiciliarios registrados en la base de datos');
+                    return [];
+                }
+
+                console.log(`✅ ${data.length} domiciliario(s) encontrado(s):\n`);
+                data.forEach((delivery, index) => {
+                    console.log(`${index + 1}. ${delivery.nombre}`);
+                    console.log(`   📞 Teléfono: ${delivery.telefono}`);
+                    console.log(`   🆔 ID: ${delivery.id}`);
+                    console.log(`   📊 Estado: ${delivery.estado}`);
+                    console.log('');
+                });
+                
+                console.log('💡 Para hacer login, ingresa solo los 10 dígitos del número');
+                console.log('================================================');
+                
+                return data;
+            } catch (error) {
+                console.error('❌ Error al obtener domiciliarios:', error);
+                return [];
+            }
+        };
+
         // ============================================
         // 🎧 DETECCIÓN DE BACKGROUND/FOREGROUND
         // ============================================
@@ -1648,6 +1708,7 @@
         window.FLUXI = {
             version: APP_VERSION,
             checkStatus: checkLocationStatus,
+            checkDeliveries: checkRegisteredDeliveries,
             forceUpdate: updateLocation,
             systemHealth: systemHealth,
             reconnect: attemptReconnect,
@@ -1656,7 +1717,8 @@
         };
         
         console.log('%c🚀 FLUXI v' + APP_VERSION + ' - Tracking Automático', 'color: #27ae60; font-size: 16px; font-weight: bold;');
-        console.log('%c💡 TIP: Usa FLUXI.checkStatus() en la consola para ver el estado completo', 'color: #3498db; font-style: italic;');
+        console.log('%c💡 TIP: Usa FLUXI.checkStatus() para ver el estado del sistema', 'color: #3498db; font-style: italic;');
+        console.log('%c💡 TIP: Usa FLUXI.checkDeliveries() para ver domiciliarios registrados', 'color: #3498db; font-style: italic;');
     </script>
 </body>
 </html>
